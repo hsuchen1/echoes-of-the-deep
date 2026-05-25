@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>深海迴聲 Echoes of the Deep</title>
+  <meta name="description" content="SDG14 沉浸式深海探索 — 透過潛水艇觀測窗，潛入海洋保育核心議題。" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Noto+Sans+TC:wght@300;400;500;700;900&family=Share+Tech+Mono&display=swap"
+    rel="stylesheet" />
+  <link rel="stylesheet" href="static/style.css?v=38" />
+  <link rel="preload" as="image" href="static/images/scene0_start.png" />
+  <link rel="preload" as="image" href="static/images/scene1.png" />
+</head>
+
+<body>
+  
+  <!-- 固定背景層 (Crossfade) -->
+  <div id="bg-container">
+    <div class="bg-layer" id="bg-layer-0"></div>
+    <div class="bg-layer" id="bg-layer-1">
+      <img class="creature coral-deco coral-1" src="static/images/coral.png" alt="珊瑚" />
+      <img class="creature coral-deco coral-2" src="static/images/coral.png" alt="珊瑚" />
+    </div>
+    <div class="bg-layer" id="bg-layer-2"></div>
+    <div class="bg-layer" id="bg-layer-3"></div>
+  </div>
+
+  <!-- 真實窗框圖片：本身已去背，直接疊加在畫面上即可 -->
+  <img id="porthole-img" src="static/images/viewport.png" alt="porthole" />
+
+  <!-- 全域粒子系統 (氣泡 + 海雪) -->
+  <canvas id="particle-canvas"></canvas>
+
+  <!-- 潛艇觀測窗玻璃效果 (暗角 + 掃描線 + 反光) -->
+  <div id="glass-fx">
+    <div class="glass-vignette"></div>
+    <div class="glass-scanlines"></div>
+    <div class="glass-reflection"></div>
+    <div class="glass-aberration"></div>
+  </div>
+
+  <div id="left-hud">
+    <div class="hud-label">導航進度</div>
+    <nav class="nav-steps">
+      <div class="nav-step active" id="nav-0">
+        <div class="nav-dot-wrap"><span class="nav-dot"></span><span class="nav-dot-line"></span></div>
+        <div class="nav-info">
+          <div class="nav-depth">0m</div>
+          <div class="nav-name">啟航</div>
+        </div>
+      </div>
+      <div class="nav-step" id="nav-1">
+        <div class="nav-dot-wrap"><span class="nav-dot"></span><span class="nav-dot-line"></span></div>
+        <div class="nav-info">
+          <div class="nav-depth">0-200m</div>
+          <div class="nav-name">陽光帶<small>珊瑚白化</small></div>
+        </div>
+      </div>
+      <div class="nav-step" id="nav-2">
+        <div class="nav-dot-wrap"><span class="nav-dot"></span><span class="nav-dot-line"></span></div>
+        <div class="nav-info">
+          <div class="nav-depth">200-1000m</div>
+          <div class="nav-name">暮色帶<small>塑膠污染</small></div>
+        </div>
+      </div>
+      <div class="nav-step" id="nav-3">
+        <div class="nav-dot-wrap"><span class="nav-dot"></span><span class="nav-dot-line"></span></div>
+        <div class="nav-info">
+          <div class="nav-depth">1000m+</div>
+          <div class="nav-name">午夜帶<small>底拖網危機</small></div>
+        </div>
+      </div>
+      <div class="nav-step" id="nav-4">
+        <div class="nav-dot-wrap"><span class="nav-dot"></span></div>
+        <div class="nav-info">
+          <div class="nav-depth">抵達海床</div>
+          <div class="nav-name">分析結算</div>
+        </div>
+      </div>
+    </nav>
+  </div>
+
+  <div id="right-hud">
+    <div id="depth-section">
+      <div class="hud-label">深度計 DEPTH</div>
+      <div class="depth-m-row">
+        <div id="depth-big">0</div><span class="depth-unit-lbl">m</span>
+      </div>
+    </div>
+    <div class="hud-divider"></div>
+    <div>
+      <div class="hud-label">深度曲線</div>
+      <div class="depth-chart-wrap"><canvas id="depth-chart" width="160" height="60"></canvas></div>
+    </div>
+    <div class="hud-divider"></div>
+    <div>
+      <div class="hud-label">環境狀態</div>
+      <div class="env-grid">
+        <div class="env-item"><span class="env-icon">⊙</span><span class="env-val" id="env-pressure">1.0</span><span
+            class="env-key">水壓 atm</span></div>
+        <div class="env-item"><span class="env-icon">♒</span><span class="env-val" id="env-temp">25.0</span><span
+            class="env-key">水溫 °C</span></div>
+        <div class="env-item"><span class="env-icon">○</span><span class="env-val" id="env-o2">21</span><span
+            class="env-key">氧氣 %</span></div>
+      </div>
+    </div>
+    <div class="hud-divider"></div>
+    <div>
+      <div class="hud-label">聲音狀態</div>
+      <div class="audio-wave-wrap"><canvas id="audio-wave" width="160" height="24"></canvas></div>
+      <div class="audio-mode-row"><span class="audio-mode-key">深海低頻模式</span><span class="audio-mode-val"
+          id="audio-mode-label">OFF</span></div>
+    </div>
+  </div>
+
+  <div id="sound-controls">
+    <div class="hud-label">音量控制</div>
+    <div class="vol-row"><span>主音量</span><input type="range" id="vol-master" min="0" max="100" value="70" /></div>
+    <div class="vol-row"><span>音樂</span><input type="range" id="vol-music" min="0" max="100" value="60" /></div>
+    <div class="vol-row"><span>音效</span><input type="range" id="vol-sfx" min="0" max="100" value="80" /></div>
+  </div>
+
+  <div id="scroll-world">
+
+    <section id="scene-0" class="scene">
+      <canvas id="surface-canvas"></canvas>
+      <img class="creature seagull seagull-1" src="static/images/seagull.png" alt="海鷗" />
+      <img class="creature seagull seagull-2" src="static/images/seagull.png" alt="海鷗" />
+      <img class="creature seagull seagull-3" src="static/images/seagull.png" alt="海鷗" />
+      <img class="creature seagull seagull-4" src="static/images/seagull.png" alt="海鷗" />
+      <div class="scene-content hero-content">
+        <div class="sdg-badge">SDG 14 · 水下生命</div>
+        <h1 class="hero-title">深海迴聲<br /><span class="hero-en">Echoes of the Deep</span></h1>
+        <p class="hero-sub">透過潛水艇的觀測窗，探索人類正在失去的深藍世界</p>
+        <button id="btn-start" class="btn-start"><span class="btn-icon">▼</span><span>開始潛航</span></button>
+        <div class="audio-hint">🔊 建議戴上耳機，點擊按鈕開啟深海音效</div>
+        <div class="scroll-hint">▾ SCROLL TO DIVE ▾</div>
+      </div>
+    </section>
+
+    <section id="scene-1" class="scene">
+      <canvas id="coral-canvas"></canvas>
+      <div class="scene-content">
+        <div class="zone-badge reveal">☀ 透光層 · SUNLIGHT ZONE · 0–200m</div>
+        <div class="topic-card reveal">
+          <div class="topic-icon">🪸</div>
+          <div>
+            <h2 class="topic-title">珊瑚白化危機</h2>
+            <p class="topic-desc">海水溫度升高讓珊瑚將共生藻驅逐出體外。目前全球超過 <strong>50%</strong> 的珊瑚礁已遭受嚴重漂白。</p>
+          </div>
+        </div>
+        <div class="quiz-card glass-card reveal">
+          <div class="quiz-num">問題 01 / 03</div>
+          <p class="quiz-q">你眼前的珊瑚為何逐漸失去色彩，變成死寂的白色？</p>
+          <div class="quiz-opts">
+            <button class="opt-btn" data-q="1" data-ok="false">A．海底火山噴發導致海水酸化</button>
+            <button class="opt-btn" data-q="1" data-ok="true">B．海水升溫使珊瑚排出共生藻</button>
+            <button class="opt-btn" data-q="1" data-ok="false">C．過度捕撈使珊瑚失去養分來源</button>
+          </div>
+          <div class="quiz-fb" id="fb-1"></div>
+        </div>
+      </div>
+      <img class="creature dolphin" id="dolphin-icon" src="static/images/creature-dolphin.png" alt="海豚"
+        title="點擊聽海豚聲" />
+      <img class="creature dolphin dolphin-2" src="static/images/creature-dolphin.png" alt="海豚" />
+      <img class="creature dolphin dolphin-3" src="static/images/creature-dolphin.png" alt="海豚" />
+      <!-- 小丑魚：左→右（頭朝右，原圖） -->
+      <img class="creature cf-r cf-r-1" src="static/images/clownfish1.png" alt="小丑魚" />
+      <img class="creature cf-r cf-r-2" src="static/images/clownfish2.png" alt="小丑魚" />
+      <img class="creature cf-r cf-r-3" src="static/images/clownfish1.png" alt="小丑魚" />
+      <img class="creature cf-r cf-r-4" src="static/images/clownfish2.png" alt="小丑魚" />
+      <img class="creature cf-r cf-r-5" src="static/images/clownfish1.png" alt="小丑魚" />
+      <!-- 小丑魚：右→左（翻轉朝左） -->
+      <img class="creature cf-l cf-l-1" src="static/images/clownfish2.png" alt="小丑魚" />
+      <img class="creature cf-l cf-l-2" src="static/images/clownfish1.png" alt="小丑魚" />
+      <img class="creature cf-l cf-l-3" src="static/images/clownfish2.png" alt="小丑魚" />
+      <img class="creature cf-l cf-l-4" src="static/images/clownfish1.png" alt="小丑魚" />
+      <!-- 藍倒吊：左→右（頭朝右） -->
+      <img class="creature bt-r bt-r-1" src="static/images/bluetang.png" alt="藍倒吊" />
+      <img class="creature bt-r bt-r-2" src="static/images/bluetang.png" alt="藍倒吊" />
+      <img class="creature bt-r bt-r-3" src="static/images/bluetang.png" alt="藍倒吊" />
+      <img class="creature bt-r bt-r-4" src="static/images/bluetang.png" alt="藍倒吊" />
+      <!-- 藍倒吊：右→左（翻轉朝左） -->
+      <img class="creature bt-l bt-l-1" src="static/images/bluetang.png" alt="藍倒吊" />
+      <img class="creature bt-l bt-l-2" src="static/images/bluetang.png" alt="藍倒吊" />
+      <img class="creature bt-l bt-l-3" src="static/images/bluetang.png" alt="藍倒吊" />
+      <img class="creature bt-l bt-l-4" src="static/images/bluetang.png" alt="藍倒吊" />
+      <img class="creature turtle greenturtle" src="static/images/greenturtle.png" alt="綠蠵龜" />
+      <img class="creature seahorse" src="static/images/seahorse.png" alt="海馬" />
+    </section>
+
+    <section id="scene-2" class="scene">
+      <canvas id="plastic-canvas"></canvas>
+      <div class="scene-content">
+        <div class="zone-badge reveal">🌑 弱光層 · TWILIGHT ZONE · 200–1000m</div>
+        <div class="topic-card reveal">
+          <div class="topic-icon">🛢</div>
+          <div>
+            <h2 class="topic-title">塑膠微粒污染</h2>
+            <p class="topic-desc">每年約 <strong>800萬噸</strong> 塑膠流入海洋。降解後的微塑膠進入食物鏈底端，最終回到人類餐桌。</p>
+          </div>
+        </div>
+        <div class="quiz-card glass-card reveal">
+          <div class="quiz-num">問題 02 / 03</div>
+          <p class="quiz-q">漂浮在弱光層的塑膠微粒，最終會流向何處？</p>
+          <div class="quiz-opts">
+            <button class="opt-btn" data-q="2" data-ok="false">A．沉入海床後永久封存，不影響生態</button>
+            <button class="opt-btn" data-q="2" data-ok="false">B．被洋流帶到極地自然分解</button>
+            <button class="opt-btn" data-q="2" data-ok="true">C．進入浮游生物→小魚→大魚的食物鏈，最後到人類體內</button>
+          </div>
+          <div class="quiz-fb" id="fb-2"></div>
+        </div>
+      </div>
+      <img class="creature whale" id="whale-icon" src="static/images/creature-whale.png" alt="抹香鯨" title="點擊聽鯨歌" />
+      <img class="creature whale whale-2" src="static/images/creature-whale2.png" alt="小抹香鯨" />
+      <img class="creature whale whale-3" src="static/images/creature-whale.png" alt="遠方鯨魚" />
+      <img class="creature plastic-bag pb-1" src="static/images/plastic_garbage.png" alt="塑膠垃圾" />
+      <img class="creature plastic-bag pb-2" src="static/images/plastic_bottle.png" alt="塑膠瓶" />
+      <img class="creature plastic-bag pb-3" src="static/images/plastic_garbage2.png" alt="塑膠垃圾" />
+      <img class="creature plastic-bag pb-4" src="static/images/plastic_bottle_cap.png" alt="塑膠瓶蓋" />
+      <img class="creature plastic-bag pb-5" src="static/images/plastic_bottle_cap2.png" alt="塑膠瓶蓋" />
+      <img class="creature plastic-bag pb-6" src="static/images/plastic_bottle_cap3.png" alt="塑膠瓶蓋" />
+      <img class="creature plastic-bag pb-7" src="static/images/plastic_rope.png" alt="塑膠繩" />
+      <img class="creature plastic-bag pb-8" src="static/images/plastic_garbage.png" alt="塑膠垃圾" />
+      <img class="creature plastic-bag pb-9" src="static/images/plastic_bottle.png" alt="塑膠瓶" />
+      <img class="creature plastic-bag pb-10" src="static/images/plastic_garbage2.png" alt="塑膠垃圾" />
+      <img class="creature plastic-bag pb-11" src="static/images/plastic_bottle_cap.png" alt="塑膠瓶蓋" />
+      <img class="creature plastic-bag pb-12" src="static/images/plastic_bottle_cap2.png" alt="塑膠瓶蓋" />
+      <img class="creature plastic-bag pb-13" src="static/images/plastic_bottle_cap3.png" alt="塑膠瓶蓋" />
+      <img class="creature plastic-bag pb-14" src="static/images/plastic_rope.png" alt="塑膠繩" />
+      <img class="creature plastic-bag pb-15" src="static/images/plastic_bottle.png" alt="塑膠瓶" />
+    </section>
+
+    <section id="scene-3" class="scene midnight-scene">
+      <canvas id="biolum-canvas"></canvas>
+      <div class="scene-content">
+        <div class="zone-badge neon-badge reveal">◉ 無光層 · MIDNIGHT ZONE · 1000m+</div>
+        <div class="topic-card abyss-card reveal">
+          <div class="topic-icon glow-icon">🌀</div>
+          <div>
+            <h2 class="topic-title glow-text">底層生態破壞</h2>
+            <p class="topic-desc">底拖網漁船用巨大鐵鏈與網具橫掃海床，<strong>一次作業</strong>即可摧毀需要數百年才能形成的深海珊瑚群落。</p>
+          </div>
+        </div>
+        <div class="quiz-card glass-card abyss-glass reveal">
+          <div class="quiz-num">問題 03 / 03</div>
+          <p class="quiz-q">在這片黑暗中，什麼人類活動正在無差別摧毀海床生態？</p>
+          <div class="quiz-opts">
+            <button class="opt-btn" data-q="3" data-ok="false">A．深海採礦作業釋放有毒重金屬</button>
+            <button class="opt-btn" data-q="3" data-ok="false">B．核廢料桶在深海自然洩漏</button>
+            <button class="opt-btn" data-q="3" data-ok="true">C．底拖網捕撈橫掃海床，摧毀珊瑚礁群落</button>
+          </div>
+          <div class="quiz-fb" id="fb-3"></div>
+        </div>
+      </div>
+      <img class="creature anglerfish angler-1" src="static/images/creature-anglerfish.png" alt="鮟鱇魚" />
+      <img class="creature anglerfish angler-2" src="static/images/creature-anglerfish.png" alt="鮟鱇魚" />
+      <img class="creature anglerfish angler-3" src="static/images/creature-anglerfish.png" alt="鮟鱇魚" />
+      <img class="creature deep-jelly jelly-1" src="static/images/creature-jellyfish.png" alt="水母" />
+      <img class="creature deep-jelly jelly-2" src="static/images/creature-jellyfish.png" alt="水母" />
+      <img class="creature deep-jelly jelly-3" src="static/images/creature-jellyfish.png" alt="水母" />
+      <img class="creature deep-jelly jelly-4" src="static/images/creature-jellyfish.png" alt="水母" />
+      <img class="creature deep-jelly jelly-5" src="static/images/creature-jellyfish.png" alt="水母" />
+    </section>
+
+    <section id="scene-4" class="scene terminal-scene">
+      <div class="scene-content terminal-content">
+        <div class="terminal-header">
+          <div class="terminal-title">分析完成！</div>
+          <div class="terminal-sub">感謝您的探索，您的選擇將為海洋帶來改變！</div>
+        </div>
+        <div class="terminal-body">
+          <div class="terminal-panel persona-panel">
+            <div class="panel-label">您的海洋守護者身分</div>
+            <div class="persona-display">
+              <div class="persona-badge-wrap">
+                <div id="persona-icon" class="persona-icon">🐋</div>
+                <div class="persona-hex"></div>
+              </div>
+              <div>
+                <div id="persona-name" class="persona-name">睿智的藍鯨</div>
+                <div id="persona-desc" class="persona-desc">您擁有廣闊的海洋知識，是海洋最堅實的守護者！</div>
+              </div>
+            </div>
+          </div>
+          <div class="terminal-panel score-panel">
+            <div class="panel-label">您的探索成績</div>
+            <div class="score-circle-wrap">
+              <svg class="score-circle" viewBox="0 0 100 100">
+                <circle cx="50" cy="50" r="42" fill="none" stroke="rgba(0,255,180,0.1)" stroke-width="6" />
+                <circle id="score-arc" cx="50" cy="50" r="42" fill="none" stroke="rgba(0,255,180,0.9)" stroke-width="6"
+                  stroke-linecap="round" stroke-dasharray="264" stroke-dashoffset="264" transform="rotate(-90 50 50)"
+                  style="filter:drop-shadow(0 0 6px rgba(0,255,180,0.8));transition:stroke-dashoffset 1.2s cubic-bezier(0.22,1,0.36,1)" />
+              </svg>
+              <div class="score-inner">
+                <div id="score-num" class="score-num">0/3</div>
+                <div id="score-pct" class="score-pct">正確率 0%</div>
+              </div>
+            </div>
+            <div id="score-comment" class="score-comment"></div>
+          </div>
+          <div class="terminal-panel rank-panel">
+            <div class="panel-label">知識水平比較</div>
+            <div class="rank-text">您的海洋知識超越了全站</div>
+            <div id="pr-big" class="pr-big">—%</div>
+            <div class="rank-text">的探索者！</div>
+            <div class="pr-bar-wrap">
+              <div class="pr-bar-bg">
+                <div id="pr-bar" class="pr-bar-fill"></div>
+                <div class="sub-icon">🤿</div>
+              </div>
+              <div class="pr-ticks"><span>0%</span><span>25%</span><span>50%</span><span>75%</span><span>100%</span>
+              </div>
+            </div>
+          </div>
+          <div class="terminal-panel stats-panel">
+            <div class="panel-label">全站數據統計（即時更新）</div>
+            <div class="stats-grid">
+              <div class="stat-item"><span class="stat-icon">🐋</span><span id="stat-whale"
+                  class="stat-num">—</span><span class="stat-lbl">位睿智的藍鯨<br />完成了潛航</span></div>
+              <div class="stat-item"><span class="stat-icon">👥</span><span id="stat-total"
+                  class="stat-num">—</span><span class="stat-lbl">位探索者<br />加入守護行列</span></div>
+              <div class="stat-item"><span class="stat-icon">🌊</span><span id="stat-dives"
+                  class="stat-num">—</span><span class="stat-lbl">次潛航總數<br />一起守護海洋</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="terminal-actions">
+          <button id="btn-restart" class="action-btn">↺ 再來一次<br /><small>重新探索</small></button>
+          <button id="btn-share" class="action-btn action-btn-alt">⇪ 分享成果<br /><small>邀請好友一起守護海洋</small></button>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <audio id="audio-click" preload="auto">
+    <source src="https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3" type="audio/mpeg" />
+  </audio>
+  <audio id="audio-ambient" preload="auto" loop>
+    <source src="static/audio/underwater-ambience.mp3" type="audio/mpeg" />
+  </audio>
+  <audio id="audio-music" preload="auto" loop>
+    <source src="static/audio/ocean_theme_music.mp3" type="audio/mpeg" />
+  </audio>
+  <audio id="audio-dolphin" preload="auto">
+    <source src="static/audio/dolphin.mp3" type="audio/mpeg" />
+  </audio>
+  <audio id="audio-whale" preload="auto">
+    <source src="static/audio/whale.mp3" type="audio/mpeg" />
+  </audio>
+
+  <!-- Lenis 平滑滾動 -->
+  <script src="https://unpkg.com/lenis@1.1.18/dist/lenis.min.js"></script>
+
+  <!-- GSAP 動畫套件 -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+
+  <script src="static/main.js?v=24"></script>
+</body>
+
+</html>

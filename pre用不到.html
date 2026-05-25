@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>深海回音 Echoes of the Deep | SDG 14</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Noto+Sans+TC:wght@300;400;700&family=Orbitron:wght@500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --surface: #0077be;
+            --sunlit: #004d80;
+            --twilight: #001f3f;
+            --midnight: #000B18;
+            --abyss: #010409;
+            --neon-blue: #00e5ff;
+            --neon-purple: #b300ff;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Noto Sans TC', sans-serif;
+            color: #fff;
+            /* 背景漸層反映下潛過程 */
+            background: linear-gradient(
+                to bottom,
+                var(--surface) 0%,
+                var(--sunlit) 25%,
+                var(--twilight) 50%,
+                var(--midnight) 75%,
+                var(--abyss) 100%
+            );
+            overflow-x: hidden;
+        }
+
+        /* 自訂捲軸 */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: var(--abyss); }
+        ::-webkit-scrollbar-thumb { background: var(--neon-blue); border-radius: 4px; }
+
+        .cinzel { font-family: 'Cinzel', serif; }
+        .orbitron { font-family: 'Orbitron', sans-serif; }
+
+        /* 潛水艇窗戶遮罩 (Porthole Overlay) */
+        .porthole-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            pointer-events: none; /* 允許點擊穿透 */
+            z-index: 9000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .porthole-window {
+            width: 95vw;
+            height: 92vh;
+            border: 3px solid #303e48;
+            border-radius: 120px;
+            box-shadow: 
+                0 0 0 100vmax rgba(5, 10, 15, 0.95), /* 覆蓋視窗外的區域 */
+                inset 0 0 60px 40px rgba(0,0,0,0.8), /* 內部陰影 */
+                0 0 15px 5px rgba(0,0,0,0.8);
+            position: relative;
+        }
+
+        /* 深度計 (Depth Meter) */
+        .depth-meter {
+            position: fixed;
+            right: 2vw;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 9500;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: var(--neon-blue);
+            text-shadow: 0 0 8px var(--neon-blue);
+        }
+        .depth-bar {
+            width: 4px;
+            height: 40vh;
+            background: rgba(255, 255, 255, 0.1);
+            margin: 15px 0;
+            position: relative;
+            border-radius: 2px;
+        }
+        .depth-indicator {
+            position: absolute;
+            top: 0;
+            left: -4px;
+            width: 12px;
+            height: 4px;
+            background: var(--neon-blue);
+            box-shadow: 0 0 10px var(--neon-blue);
+            border-radius: 2px;
+            transition: top 0.1s linear;
+        }
+
+        /* 區塊設定 */
+        .zone {
+            min-height: 100vh;
+            position: relative;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 10vh 8vw;
+        }
+
+        /* UI 元件：玻璃牌 (Glass Card) */
+        .glass-card {
+            background: rgba(10, 20, 40, 0.4);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 2.5rem;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+            transition: transform 0.4s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        .glass-card:hover {
+            transform: translateY(-8px);
+        }
+
+        /* 測驗按鈕 (Quiz Button) */
+        .quiz-btn {
+            width: 100%;
+            text-align: left;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #f8f9fa;
+            padding: 1rem 1.5rem;
+            border-radius: 12px;
+            margin-bottom: 1rem;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            font-size: 1.1rem;
+            position: relative;
+        }
+        .quiz-btn:hover:not(:disabled) {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: var(--neon-blue);
+            transform: translateX(8px);
+        }
+        .quiz-btn.correct {
+            background: rgba(40, 167, 69, 0.2);
+            border-color: #28a745;
+            color: #fff;
+            box-shadow: 0 0 15px rgba(40, 167, 69, 0.3);
+        }
+        .quiz-btn.wrong {
+            background: rgba(220, 53, 69, 0.2);
+            border-color: #dc3545;
+            color: #fff;
+        }
+
+        /* 主要發光按鈕 (Glowing Button) */
+        .btn-glow {
+            background: transparent;
+            border: 2px solid var(--neon-blue);
+            color: var(--neon-blue);
+            border-radius: 30px;
+            padding: 12px 35px;
+            font-weight: bold;
+            letter-spacing: 2px;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            box-shadow: 0 0 15px rgba(0, 229, 255, 0.2);
+        }
+        .btn-glow:hover {
+            background: var(--neon-blue);
+            color: #000;
+            box-shadow: 0 0 30px var(--neon-blue);
+            transform: scale(1.05);
+        }
+
+        /* 裝飾生物與懸浮動畫 */
+        .creature {
+            font-size: 6rem;
+            position: absolute;
+            animation: float 6s ease-in-out infinite;
+            z-index: 5;
+            filter: drop-shadow(0 0 20px rgba(255,255,255,0.2));
+            color: rgba(255,255,255,0.8);
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(2deg); }
+        }
+
+        /* 午夜帶發光特效 (Bioluminescence) */
+        .glowing-text {
+            text-shadow: 0 0 15px var(--neon-blue), 0 0 30px var(--neon-blue);
+            color: #fff;
+        }
+        .bioluminescence .creature {
+            color: var(--neon-purple);
+            filter: drop-shadow(0 0 25px var(--neon-purple));
+        }
+
+        /* 粒子系統 (Particle System) */
+        .particles {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            pointer-events: none;
+            overflow: hidden;
+            z-index: 1;
+        }
+        .particle { position: absolute; }
+        .bubble {
+            border: 1.5px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            animation: floatUp 15s infinite linear;
+        }
+        .trash {
+            background: rgba(200, 200, 220, 0.4);
+            border-radius: 3px;
+            animation: floatDown 20s infinite linear;
+        }
+        @keyframes floatUp {
+            0% { transform: translateY(110vh) scale(1); opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { transform: translateY(-10vh) scale(1.5); opacity: 0; }
+        }
+        @keyframes floatDown {
+            0% { transform: translateY(-10vh) rotate(0deg); opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { transform: translateY(110vh) rotate(360deg); opacity: 0; }
+        }
+
+        /* 終端機 UI (Terminal Dashboard) */
+        .terminal-ui {
+            background: rgba(0, 11, 24, 0.85);
+            border: 2px solid var(--neon-blue);
+            box-shadow: 0 0 30px rgba(0, 229, 255, 0.2), inset 0 0 20px rgba(0, 229, 255, 0.1);
+        }
+        .progress-bar-glow {
+            background-color: var(--neon-blue);
+            box-shadow: 0 0 15px var(--neon-blue);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 粒子特效容器 -->
+    <div class="particles" id="bubbles"></div>
+    <div class="particles" id="plastic" style="opacity: 0; transition: opacity 1.5s ease;"></div>
+
+    <!-- 潛水艇視角遮罩 -->
+    <div class="porthole-container">
+        <div class="porthole-window"></div>
+    </div>
+
+    <!-- 深度計 UI -->
+    <div class="depth-meter orbitron">
+        <div class="small mb-2">DEPTH</div>
+        <div class="depth-bar">
+            <div class="depth-indicator" id="depth-indicator"></div>
+        </div>
+        <span id="depth-text" class="fw-bold fs-5">0m</span>
+    </div>
+
+    <!-- ==================== Section 1: Hero (0m) ==================== -->
+    <section id="hero" class="zone align-items-center text-center">
+        <h1 class="display-1 cinzel fw-bold mb-3" style="letter-spacing: 4px; text-shadow: 0 4px 20px rgba(0,0,0,0.8);">
+            Echoes of the Deep
+        </h1>
+        <h2 class="h4 fw-light mb-5" style="letter-spacing: 2px;">
+            一場潛入深淵的互動式旅程。 <span class="badge bg-info text-dark ms-2">SDG 14</span>
+        </h2>
+        <button class="btn btn-glow mt-4" onclick="scrollToZone('sunlight')">
+            START EXPLORATION <br> <span class="fs-6">開始探索</span>
+        </button>
+    </section>
+
+    <!-- ==================== Section 2: Sunlight Zone (0 - 200m) ==================== -->
+    <section id="sunlight" class="zone">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-5 text-center position-relative mb-5 mb-md-0 d-flex flex-column align-items-center justify-content-center">
+                    <!-- 動物圖示與音效互動 -->
+                    <div class="position-relative d-inline-block" style="cursor: pointer;" onclick="playAudio(this)">
+                        <i class="bi bi-droplet text-white creature" style="position: relative; animation: float 4s ease-in-out infinite;"></i>
+                        <div class="mt-4 pt-4 text-white hover-indicator">
+                            <i class="bi bi-play-circle fs-3 me-2 align-middle audio-icon"></i> 
+                            <span class="align-middle fw-bold tracking-wide">傾聽海洋的聲音</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-7">
+                    <div class="glass-card">
+                        <span class="badge mb-3 px-3 py-2 bg-primary">0 - 200m 陽光帶 (Sunlight Zone)</span>
+                        <h3 class="mb-4 fw-bold">珊瑚白化的主因是什麼？</h3>
+                        <div class="d-grid gap-3 quiz-container">
+                            <button class="quiz-btn" data-correct="true" onclick="checkAnswer(this, true)">
+                                <span class="fw-bold me-2">A.</span> 海水溫度上升
+                            </button>
+                            <button class="quiz-btn" data-correct="false" onclick="checkAnswer(this, false)">
+                                <span class="fw-bold me-2">B.</span> 海洋鹽度降低
+                            </button>
+                            <button class="quiz-btn" data-correct="false" onclick="checkAnswer(this, false)">
+                                <span class="fw-bold me-2">C.</span> 魚類過度繁殖
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==================== Section 3: Twilight Zone (200 - 1000m) ==================== -->
+    <section id="twilight" class="zone">
+        <div class="container">
+            <div class="row align-items-center flex-row-reverse">
+                <div class="col-md-5 text-center mb-5 mb-md-0">
+                     <i class="bi bi-cloud-haze2-fill text-secondary creature" style="position: relative; animation: float 5s ease-in-out infinite; opacity: 0.6;"></i>
+                </div>
+                <div class="col-md-7">
+                    <div class="glass-card">
+                        <span class="badge mb-3 px-3 py-2 bg-secondary">200 - 1000m 暮色帶 (Twilight Zone)</span>
+                        <h3 class="mb-4 fw-bold">塑膠微粒對海洋生態最大的危害為何？</h3>
+                        <div class="d-grid gap-3 quiz-container">
+                            <button class="quiz-btn" data-correct="false" onclick="checkAnswer(this, false)">
+                                <span class="fw-bold me-2">A.</span> 減少海水含氧量
+                            </button>
+                            <button class="quiz-btn" data-correct="true" onclick="checkAnswer(this, true)">
+                                <span class="fw-bold me-2">B.</span> 進入食物鏈累積毒素
+                            </button>
+                            <button class="quiz-btn" data-correct="false" onclick="checkAnswer(this, false)">
+                                <span class="fw-bold me-2">C.</span> 造成海嘯頻率增加
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==================== Section 4: Midnight Zone (1000m+) ==================== -->
+    <section id="midnight" class="zone bioluminescence">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-5 text-center mb-5 mb-md-0">
+                     <i class="bi bi-eye-fill creature" style="position: relative; font-size: 7rem; animation: float 6s ease-in-out infinite;"></i>
+                </div>
+                <div class="col-md-7">
+                    <div class="glass-card" style="box-shadow: 0 0 40px rgba(0,229,255,0.1) !important; border-color: rgba(0,229,255,0.3);">
+                        <span class="badge mb-3 px-3 py-2" style="background: transparent; border: 1px solid var(--neon-blue); color: var(--neon-blue);">
+                            1000m+ 午夜帶 (Midnight Zone)
+                        </span>
+                        <h3 class="mb-4 fw-bold glowing-text">深海底拖網捕撈最大的爭議是什麼？</h3>
+                        <div class="d-grid gap-3 quiz-container">
+                            <button class="quiz-btn" data-correct="false" onclick="checkAnswer(this, false)">
+                                <span class="fw-bold me-2">A.</span> 漁獲量太少
+                            </button>
+                            <button class="quiz-btn" data-correct="true" onclick="checkAnswer(this, true)">
+                                <span class="fw-bold me-2">B.</span> 破壞深海底棲生態系
+                            </button>
+                            <button class="quiz-btn" data-correct="false" onclick="checkAnswer(this, false)">
+                                <span class="fw-bold me-2">C.</span> 消耗過多船隻燃油
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==================== Section 5: Ocean Floor & Terminal ==================== -->
+    <section id="terminal" class="zone align-items-center">
+        <div class="container" style="max-width: 800px;">
+            <div class="terminal-ui rounded-4 p-5 text-center">
+                <h2 class="glowing-text mb-4 orbitron">
+                    <i class="bi bi-hdd-network-fill me-2"></i> EXPLORATION COMPLETE
+                </h2>
+                <h5 class="text-secondary mb-5">探索完成 - 深海資料已同步</h5>
+                
+                <div class="bg-dark bg-opacity-50 rounded-3 p-4 mb-4 border border-secondary">
+                    <h6 class="text-muted mb-2 orbitron">PERSONA IDENTIFIED</h6>
+                    <div class="display-6 fw-bold text-white my-3">
+                        你是 <span id="persona-result" style="color: var(--neon-blue);">未知生物</span>！
+                    </div>
+                </div>
+                
+                <div class="text-start mb-5">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="small font-monospace text-muted">知識儲備量 (KNOWLEDGE GAUGE)</span>
+                        <span class="small font-monospace text-info" id="percent-text">0%</span>
+                    </div>
+                    <div class="progress" style="height: 12px; background-color: rgba(0,229,255,0.1);">
+                        <div class="progress-bar progress-bar-glow" id="percent-bar" role="progressbar" style="width: 0%; transition: width 1.5s ease-out;"></div>
+                    </div>
+                    <p class="small text-muted mt-3 text-center" id="summary-text">正在分析你的探索數據...</p>
+                </div>
+                
+                <div class="d-flex flex-column flex-sm-row gap-3 justify-content-center mt-4">
+                    <button class="btn btn-glow"><i class="bi bi-share-fill me-2"></i> 分享旅程 (SHARE)</button>
+                    <button class="btn btn-outline-light rounded-pill px-4 py-2" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">
+                        <i class="bi bi-chevron-double-up me-2"></i> 返回海面 (RETURN)
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <script>
+        // --- 1. 深度計與背景漸層邏輯 (Scroll Mechanics) ---
+        document.addEventListener('scroll', () => {
+            const scrollY = window.scrollY;
+            const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+            const scrollFraction = maxScroll > 0 ? scrollY / maxScroll : 0;
+            
+            // 模擬最大深度 1500m
+            const depth = Math.floor(scrollFraction * 1500);
+            document.getElementById('depth-text').innerText = depth + 'm';
+            
+            // 更新進度條
+            const indicatorTop = Math.min(scrollFraction * 100, 100);
+            document.getElementById('depth-indicator').style.top = indicatorTop + '%';
+
+            // 粒子系統轉換：大於 30% 深度時，泡泡消失，塑膠微粒出現
+            if (scrollFraction > 0.3) {
+                document.getElementById('bubbles').style.opacity = '0';
+                document.getElementById('plastic').style.opacity = '1';
+            } else {
+                document.getElementById('bubbles').style.opacity = '1';
+                document.getElementById('plastic').style.opacity = '0';
+            }
+        });
+
+        // --- 2. 導航功能 ---
+        function scrollToZone(id) {
+            document.getElementById(id).scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // --- 3. 音效模擬功能 ---
+        function playAudio(element) {
+            const icon = element.querySelector('.audio-icon');
+            if (icon.classList.contains('bi-volume-up-fill')) return; // 正在播放中
+
+            icon.classList.replace('bi-play-circle', 'bi-volume-up-fill');
+            element.classList.add('text-info');
+            
+            setTimeout(() => {
+                icon.classList.replace('bi-volume-up-fill', 'bi-play-circle');
+                element.classList.remove('text-info');
+            }, 2500);
+        }
+
+        // --- 4. 問答系統與結果計算 ---
+        let score = 0;
+        let answeredQuestions = 0;
+        const totalQuestions = 3;
+
+        function checkAnswer(btn, isCorrect) {
+            const container = btn.closest('.quiz-container');
+            if (container.dataset.answered === 'true') return;
+            container.dataset.answered = 'true';
+            
+            const buttons = container.querySelectorAll('.quiz-btn');
+            
+            // 標示正確答案與禁用所有按鈕
+            buttons.forEach(b => {
+                b.disabled = true;
+                if (b.dataset.correct === "true") {
+                    b.classList.add('correct');
+                } else {
+                    b.style.opacity = '0.5';
+                }
+            });
+
+            // 處理使用者的選擇
+            btn.style.opacity = '1';
+            if (isCorrect) {
+                score++;
+            } else {
+                btn.classList.add('wrong');
+            }
+            
+            answeredQuestions++;
+            if (answeredQuestions === totalQuestions) {
+                generateResults();
+            }
+        }
+
+        // --- 5. 生成結果終端機 ---
+        function generateResults() {
+            let personaText = '';
+            let percentVal = 0;
+            
+            if (score === 3) {
+                personaText = '充滿智慧的 虎鯨';
+                percentVal = 95;
+            } else if (score === 2) {
+                personaText = '敏銳的 海豚';
+                percentVal = 78;
+            } else if (score === 1) {
+                personaText = '堅韌的 海龜';
+                percentVal = 45;
+            } else {
+                personaText = '迷航的 水母';
+                percentVal = 12;
+            }
+            
+            document.getElementById('persona-result').innerText = personaText;
+            document.getElementById('percent-text').innerText = percentVal + '%';
+            document.getElementById('percent-bar').style.width = percentVal + '%';
+            document.getElementById('summary-text').innerText = `你的海洋知識超越了 ${percentVal}% 的探索者。`;
+        }
+
+        // --- 6. 生成粒子特效 ---
+        function createParticles() {
+            // Bubbles (向上)
+            const bubblesContainer = document.getElementById('bubbles');
+            for(let i=0; i<30; i++) {
+                let p = document.createElement('div');
+                p.className = 'particle bubble';
+                p.style.left = Math.random() * 100 + 'vw';
+                p.style.animationDuration = (Math.random() * 8 + 7) + 's';
+                p.style.animationDelay = (Math.random() * 5) + 's';
+                let size = Math.random() * 10 + 2;
+                p.style.width = size + 'px';
+                p.style.height = size + 'px';
+                bubblesContainer.appendChild(p);
+            }
+
+            // Plastic / Trash (向下)
+            const plasticContainer = document.getElementById('plastic');
+            for(let i=0; i<25; i++) {
+                let p = document.createElement('div');
+                p.className = 'particle trash';
+                p.style.left = Math.random() * 100 + 'vw';
+                p.style.animationDuration = (Math.random() * 12 + 8) + 's';
+                p.style.animationDelay = (Math.random() * 5) + 's';
+                let size = Math.random() * 12 + 4;
+                p.style.width = size + 'px';
+                p.style.height = size + 'px';
+                plasticContainer.appendChild(p);
+            }
+        }
+
+        // 初始化
+        window.onload = createParticles;
+    </script>
+</body>
+</html>
