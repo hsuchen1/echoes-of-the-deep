@@ -10,20 +10,20 @@ body{font-family:var(--sans);background:#020c16;color:#fff}
 /* ═══ PORTHOLE IMAGE overlay (visible frame on top of content) ═══ */
 #porthole-img{
   position:fixed;top:0;left:0;z-index:8950;pointer-events:none;
-  width:100vw;height:100vh;
+  width:100%;height:100vh;
   object-fit:fill; /* Stretch exactly to viewport, preventing any cropping of the top frame or bottom console */
 }
 
 /* ═══ GLOBAL PARTICLE CANVAS (bubbles + marine snow) ═══ */
 #particle-canvas{
-  position:fixed;top:0;left:0;width:100vw;height:100vh;
+  position:fixed;top:0;left:0;width:100%;height:100vh;
   z-index:8940;pointer-events:none;
   will-change:transform; /* GPU layer promotion — prevents repaint during scroll */
 }
 
 /* ═══ GLASS EFFECTS (porthole realism) ═══ */
 #glass-fx{
-  position:fixed;top:0;left:0;width:100vw;height:100vh;
+  position:fixed;top:0;left:0;width:100%;height:100vh;
   z-index:8945;pointer-events:none;
   overflow:hidden;
   will-change:transform;
@@ -196,7 +196,7 @@ body{font-family:var(--sans);background:#020c16;color:#fff}
 
 /* ═══ FIXED BACKGROUNDS (Crossfade + Parallax) ═══ */
 #bg-container {
-  position: fixed; top: 0; left: 0; width: 100vw; height: 130vh; z-index: -10; pointer-events: none;
+  position: fixed; top: 0; left: 0; width: 100%; height: 130vh; z-index: -10; pointer-events: none;
   will-change: transform;
 }
 .bg-layer {
@@ -364,13 +364,17 @@ body{font-family:var(--sans);background:#020c16;color:#fff}
     top: 20px; left: 20px; transform: none; width: auto;
   }
   .nav-step { display: none; }
-  .nav-step.active { display: flex; }
+  .nav-step.active { display: flex; white-space: nowrap; }
   .nav-dot-line { display: none; }
+  .nav-step.active .nav-depth { font-size: 10px !important; }
+  .nav-step.active .nav-name { font-size: 12px !important; }
+  .nav-step.active .nav-name small { font-size: 9px !important; }
   
   #right-hud {
-    top: 28%; right: 1%; bottom: auto; transform: none; width: 15%; min-width: 60px;
+    top: 28%; right: 1%; bottom: auto; transform: none; width: 18%; min-width: 80px;
     padding: 0; border-radius: 0; background: transparent;
     display: flex; flex-direction: column; align-items: center;
+    overflow: visible !important;
   }
   
   /* 完全隱藏深度計以外的所有面板（連同標題） */
@@ -380,10 +384,95 @@ body{font-family:var(--sans);background:#020c16;color:#fff}
   #depth-section { display: flex; flex-direction: column; align-items: center; text-align: center; width: 100%; }
   #depth-section .hud-label { font-size: 10px; margin-bottom: 5px; text-align: center; }
   .depth-m-row { font-size: clamp(16px, 4vw, 24px); justify-content: center; width: 100%; }
+  #depth-big { font-size: 22px !important; }
+  .depth-unit-lbl { font-size: 10px !important; margin-left: 2px !important; }
   
-  .quiz-card { bottom: 5vh; right: 5vw; width: 90vw; padding: 15px; }
-  .scene-content { padding: 0 20px; }
-  .hero-title { font-size: 3rem; }
+  #sound-controls { display: none !important; }
+
+  /* 限制文字內容在玻璃窗內 (約 18vw 到 64vw，向右偏移 18vw) */
+  .scene-content {
+    max-width: 46vw !important;
+    margin-left: 18vw !important;
+    margin-right: auto !important;
+    transform: none !important;
+    padding: 0 !important;
+  }
+
+  .hero-title {
+    font-size: 1.4rem !important;
+    line-height: 1.2 !important;
+  }
+  .hero-en {
+    font-size: 0.65rem !important;
+    letter-spacing: 0.15em !important;
+  }
+  .hero-sub {
+    font-size: 0.65rem !important;
+    line-height: 1.4 !important;
+    margin-bottom: 1.2rem !important;
+  }
+  .audio-hint {
+    font-size: 0.62rem !important;
+    padding: 6px 12px !important;
+    backdrop-filter: blur(4px) !important;
+  }
+  .scroll-hint {
+    font-size: 0.65rem !important;
+  }
+
+  /* 題目與資訊卡片微縮以配合窄玻璃窗 */
+  .quiz-card {
+    padding: 10px !important;
+  }
+  .quiz-q {
+    font-size: 0.68rem !important;
+  }
+  .opt-btn {
+    font-size: 0.62rem !important;
+    padding: 0.35rem 0.5rem !important;
+  }
+  .topic-title {
+    font-size: 0.7rem !important;
+  }
+  .topic-desc {
+    font-size: 0.62rem !important;
+  }
+
+  /* 結算頁面改為單欄並適應窄螢幕 */
+  .terminal-title {
+    font-size: 1.1rem !important;
+  }
+  .terminal-sub {
+    font-size: 0.68rem !important;
+  }
+  .terminal-body {
+    grid-template-columns: 1fr !important;
+    gap: 0.5rem !important;
+  }
+  .persona-panel, .score-panel, .rank-panel, .stats-panel {
+    grid-column: auto !important;
+  }
+  .terminal-panel {
+    padding: 0.6rem !important;
+  }
+  .persona-display {
+    flex-direction: column !important;
+    text-align: center !important;
+    gap: 0.4rem !important;
+  }
+  .persona-desc {
+    font-size: 0.6rem !important;
+  }
+  .score-circle-wrap {
+    width: 70px !important;
+    height: 70px !important;
+  }
+  .score-num {
+    font-size: 1rem !important;
+  }
+  .pr-big {
+    font-size: 1.3rem !important;
+  }
 }
 
 /* Scene 1 — Dolphins (3) + Coral (2) */
