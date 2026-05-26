@@ -2361,6 +2361,122 @@ body {
   line-height: 1.4;
 }
 
+/* Pledge Panel */
+.pledge-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+}
+.pledge-form {
+  display: flex;
+  gap: 1rem;
+  align-items: stretch;
+  width: 100%;
+  max-width: 480px;
+}
+.pledge-input {
+  flex: 1;
+  background: rgba(0, 15, 25, 0.6);
+  border: 1px solid rgba(0, 229, 255, 0.4);
+  border-radius: 8px;
+  color: #fff;
+  padding: 0 1rem;
+  font-family: var(--tc);
+  font-size: 1rem;
+  transition: all 0.3s;
+}
+.pledge-input:focus {
+  outline: none;
+  border-color: var(--c1);
+  box-shadow: 0 0 15px rgba(0, 229, 255, 0.3);
+}
+.pledge-btn {
+  width: auto;
+  padding: 0 1.5rem;
+  border-radius: 8px;
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.pledge-success {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  font-size: 1.1rem;
+  color: #fff;
+  animation: fadeUp 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.success-icon {
+  font-size: 1.5rem;
+  animation: pulseHex 2s infinite;
+}
+.success-msg {
+  letter-spacing: 0.05em;
+}
+.glow-text {
+  color: var(--c1);
+  text-shadow: 0 0 10px var(--c1);
+}
+
+/* Roster Panel */
+.roster-panel {
+  width: 100%;
+}
+.roster-list {
+  max-height: 200px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding-right: 0.5rem;
+}
+.roster-list::-webkit-scrollbar {
+  width: 6px;
+}
+.roster-list::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 3px;
+}
+.roster-list::-webkit-scrollbar-thumb {
+  background: rgba(0, 229, 255, 0.4);
+  border-radius: 3px;
+}
+.roster-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.6rem 1rem;
+  background: rgba(0, 229, 255, 0.05);
+  border-left: 2px solid var(--c1);
+  border-radius: 4px;
+  font-family: var(--tc);
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.85);
+  animation: fadeUp 0.4s ease-out;
+}
+.roster-item:hover {
+  background: rgba(0, 229, 255, 0.1);
+}
+.roster-name {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+.roster-score {
+  font-family: var(--mono);
+  color: var(--g1);
+  font-size: 0.85rem;
+}
+.roster-empty {
+  text-align: center;
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.4);
+  padding: 1rem 0;
+}
+
 /* Actions */
 .terminal-actions {
   display: flex;

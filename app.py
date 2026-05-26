@@ -1,7 +1,9 @@
 from flask import Flask, request, jsonify, send_from_directory
+from flask_cors import CORS
 import sqlite3, os, datetime
 
 app = Flask(__name__)
+CORS(app) # 允許跨來源請求，支援前端部署在 GitHub Pages
 DB = os.path.join(os.path.dirname(__file__), 'results.db')
 
 def get_db():
@@ -17,6 +19,11 @@ def init_db():
             persona TEXT NOT NULL,
             created_at TEXT NOT NULL
         )''')
+        # 自動檢查並加入 nickname 欄位 (相容舊資料庫)
+        cursor = conn.execute("PRAGMA table_info(results)")
+        columns = [row['name'] for row in cursor.fetchall()]
+        if 'nickname' not in columns:
+            conn.execute("ALTER TABLE results ADD COLUMN nickname TEXT")
         conn.commit()
 
 init_db()
@@ -32,9 +39,30 @@ def submit():
     persona = str(data.get('persona', ''))
     now = datetime.datetime.utcnow().isoformat()
     with get_db() as conn:
-        conn.execute('INSERT INTO results (score,persona,created_at) VALUES (?,?,?)', (score,persona,now))
+        cursor = conn.execute('INSERT INTO results (score,persona,created_at) VALUES (?,?,?)', (score,persona,now))
         conn.commit()
-    return jsonify({'status':'ok'})
+        inserted_id = cursor.lastrowid
+    return jsonify({'status':'ok', 'id': inserted_id})
+
+@app.route('/api/pledge', methods=['POST'])
+def pledge():
+    data = request.get_json()
+    row_id = data.get('id')
+    nickname = data.get('nickname', '匿名守護者')
+    if row_id:
+        with get_db() as conn:
+            conn.execute('UPDATE results SET nickname = ? WHERE id = ?', (nickname, row_id))
+            conn.commit()
+    return jsonify({'status': 'ok'})
+
+@app.route('/api/guardians')
+def guardians():
+    with get_db() as conn:
+        rows = conn.execute(
+            'SELECT nickname, score FROM results WHERE nickname IS NOT NULL AND nickname != "" ORDER BY id DESC LIMIT 50'
+        ).fetchall()
+        guardians_list = [{'name': r['nickname'], 'score': r['score']} for r in rows]
+    return jsonify(guardians_list)
 
 @app.route('/api/stats')
 def stats():

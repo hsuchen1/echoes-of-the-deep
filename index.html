@@ -10,7 +10,7 @@
   <link
     href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Noto+Sans+TC:wght@300;400;500;700;900&family=Share+Tech+Mono&display=swap"
     rel="stylesheet" />
-  <link rel="stylesheet" href="static/style.css?v=54" />
+  <link rel="stylesheet" href="static/style.css?v=56" />
   <link rel="preload" as="image" href="static/images/scene0_start.png" />
   <link rel="preload" as="image" href="static/images/scene1.png" />
 </head>
@@ -333,6 +333,23 @@
                   class="stat-num">—</span><span class="stat-lbl">次潛航總數<br />一起守護海洋</span></div>
             </div>
           </div>
+          <div class="terminal-panel pledge-panel">
+            <div class="panel-label">簽署守護海洋協定</div>
+            <div id="pledge-form" class="pledge-form">
+              <input type="text" id="pledge-name" class="pledge-input" placeholder="請輸入您的暱稱..." maxlength="15" />
+              <button id="btn-pledge" class="action-btn pledge-btn">加入守護行列</button>
+            </div>
+            <div id="pledge-success" class="pledge-success" style="display: none;">
+              <div class="success-icon">✨</div>
+              <div class="success-msg">感謝 <span id="pledge-display-name" class="glow-text"></span> 成為海洋守護者！</div>
+            </div>
+          </div>
+          <div class="terminal-panel roster-panel">
+            <div class="panel-label">歷屆海洋守護者名錄</div>
+            <div id="roster-list" class="roster-list">
+              <!-- JS 會動態填寫 -->
+            </div>
+          </div>
         </div>
         <div class="terminal-actions">
           <button id="btn-restart" class="action-btn">↺ 再來一次<br /><small>重新探索</small></button>
@@ -394,7 +411,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
 
-  <script src="static/main.js?v=33"></script>
+  <script src="static/main.js?v=35"></script>
 </body>
 
 </html>

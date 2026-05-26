@@ -533,6 +533,35 @@ function animateNum(el,target,dur=1400){
   tick();
 }
 
+// ── ROSTER (FLASK BACKEND) ─────────────────
+// 如果你的前端(HTML/JS)放在 GitHub Pages，後端放在 PythonAnywhere，請把下面的引號填入後端網址
+// 例如：const BACKEND_URL = 'https://你的帳號.pythonanywhere.com';
+// 如果是本地測試或前後端在同一個伺服器，保持空字串即可。
+const BACKEND_URL = 'https://hsuchen1.pythonanywhere.com';
+
+let lastInsertedId = null;
+
+async function renderRoster() {
+  const list = $('roster-list');
+  if(!list) return;
+  try {
+    const res = await fetch(`${BACKEND_URL}/api/guardians`);
+    const guardians = await res.json();
+    if (guardians.length === 0) {
+      list.innerHTML = '<div class="roster-empty">尚無守護者，成為第一位吧！</div>';
+      return;
+    }
+    list.innerHTML = guardians.map(g => `
+      <div class="roster-item">
+        <div class="roster-name"><span>✨</span> ${g.name}</div>
+        <div class="roster-score">${g.score}/3 題</div>
+      </div>
+    `).join('');
+  } catch(e) {
+    list.innerHTML = '<div class="roster-empty">無法載入守護者名單</div>';
+  }
+}
+
 function showResults(stats){
   const p=personas[Math.min(state.score,3)];
   el.personaIcon.textContent=p.icon;
@@ -552,6 +581,7 @@ function showResults(stats){
   animateNum(el.statDives,(stats.total||1)*52+23789,2000);
   $('scene-4').classList.add('shaking');
   setTimeout(()=>$('scene-4').classList.remove('shaking'),550);
+  renderRoster();
 }
 
 async function submitResults(){
@@ -559,8 +589,10 @@ async function submitResults(){
   state.submitted=true;
   const p=personas[Math.min(state.score,3)];
   try{
-    await fetch('/api/submit',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({score:state.score,persona:p.name})});
-    const r=await fetch(`/api/stats?score=${state.score}`);
+    const response = await fetch(`${BACKEND_URL}/api/submit`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({score:state.score,persona:p.name})});
+    const resData = await response.json();
+    if(resData.id) { lastInsertedId = resData.id; }
+    const r=await fetch(`${BACKEND_URL}/api/stats?score=${state.score}`);
     showResults(await r.json());
   }catch(e){ showResults({pr:85,whale:120,total:456}); }
 }
@@ -572,6 +604,9 @@ $('btn-restart').addEventListener('click',()=>{
   document.querySelectorAll('.quiz-fb').forEach(f=>f.textContent='');
   el.scoreArc.style.strokeDashoffset='264'; el.prBar.style.width='0%';
   el.prBig.textContent='—%'; el.scoreNum.textContent='0/3'; el.scorePct.textContent='正確率 0%';
+  $('pledge-name').value = '';
+  $('pledge-form').style.display = 'flex';
+  $('pledge-success').style.display = 'none';
   window.scrollTo({top:0,behavior:'smooth'});
   setTimeout(()=>{ 
     state.started=false; el.audioModeLabel.textContent='OFF'; 
@@ -586,6 +621,38 @@ $('btn-share').addEventListener('click',()=>{
   const text=`我在「深海迴聲 Echoes of the Deep」探索中獲得了【${p.name}】的稱號！答對 ${state.score}/3 題，為 SDG14 海洋保育盡一份心力 🌊`;
   if(navigator.share){navigator.share({title:'深海迴聲',text});}
   else{navigator.clipboard.writeText(text).then(()=>alert('已複製到剪貼板！'));}
+});
+
+// ── PLEDGE ────────────────────────────────
+$('btn-pledge').addEventListener('click', async ()=>{
+  const nameInput = $('pledge-name');
+  let name = nameInput.value.trim();
+  if(!name) {
+    name = "匿名守護者";
+  }
+  $('pledge-form').style.display = 'none';
+  $('pledge-display-name').textContent = name;
+  $('pledge-success').style.display = 'flex';
+  
+  if (lastInsertedId) {
+    try {
+      await fetch(`${BACKEND_URL}/api/pledge`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({id: lastInsertedId, nickname: name})
+      });
+    } catch(e) {
+      console.error("Failed to save pledge to backend", e);
+    }
+  }
+  await renderRoster();
+  
+  // 更新統計數字
+  const totalEl = $('stat-total');
+  const currentTotal = parseInt(totalEl.textContent.replace(/[^0-9]/g,'')) || 0;
+  if(currentTotal > 0) {
+    animateNum(totalEl, currentTotal + 1, 800);
+  }
 });
 
 // ── LENIS + GSAP 官方整合 ──────────────────
