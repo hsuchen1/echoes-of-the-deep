@@ -338,9 +338,49 @@ const mTitle = $('modal-title');
 const mSci = $('modal-sciname');
 const mDepth = $('modal-depth');
 const mDesc = $('modal-desc');
+const creatureTooltip = $('creature-tooltip');
+
+// ── Tooltip helpers ──
+let tooltipRafId = null;
+let tooltipX = 0, tooltipY = 0;
+const zoneClasses = ['zone-surface', 'zone-sunlight', 'zone-twilight', 'zone-midnight', 'zone-pollution'];
+const dirClasses = ['from-top', 'from-bottom', 'from-left', 'from-right'];
+
+function getCreatureZone(classes) {
+  if (classes.includes('plastic-bag')) return 'zone-pollution';
+  if (classes.includes('seagull'))     return 'zone-surface';
+  if (classes.includes('dolphin') || classes.includes('cf-r') || classes.includes('cf-l') ||
+      classes.includes('bt-r') || classes.includes('bt-l') || classes.includes('turtle') ||
+      classes.includes('seahorse'))    return 'zone-sunlight';
+  if (classes.includes('whale'))       return 'zone-twilight';
+  if (classes.includes('anglerfish') || classes.includes('deep-jelly')) return 'zone-midnight';
+  return 'zone-sunlight'; // fallback
+}
+
+function getEntryDirection(e, el) {
+  const rect = el.getBoundingClientRect();
+  const cx = rect.left + rect.width / 2;
+  const cy = rect.top + rect.height / 2;
+  const dx = e.clientX - cx;
+  const dy = e.clientY - cy;
+  // Compare angle to determine which edge mouse entered from
+  if (Math.abs(dx) > Math.abs(dy)) {
+    return dx > 0 ? 'from-right' : 'from-left';
+  } else {
+    return dy > 0 ? 'from-bottom' : 'from-top';
+  }
+}
+
+function clearTooltipClasses() {
+  if (!creatureTooltip) return;
+  creatureTooltip.classList.remove('active', ...zoneClasses, ...dirClasses);
+}
 
 document.querySelectorAll('.creature').forEach(el => {
   el.addEventListener('click', (e) => {
+    // 點擊時隱藏懸浮提示
+    clearTooltipClasses();
+
     const classes = e.target.className.split(' ');
     let creatureKey = null;
     
@@ -389,6 +429,66 @@ document.querySelectorAll('.creature').forEach(el => {
     if (classes.includes('seagull')) playSfx(audio.seagull);
     
     e.stopPropagation();
+  });
+
+  // 懸浮提示
+  el.addEventListener('mouseenter', (e) => {
+    // 若百科視窗已開，則不顯示 hover 提示
+    if (creatureModal.classList.contains('active')) return;
+
+    const classes = e.target.className.split(' ');
+    let tipText = "點擊探索";
+    if (classes.includes('dolphin')) tipText = "🔊 點擊聽海豚聲";
+    else if (classes.includes('whale')) tipText = "🔊 點擊聽鯨歌";
+    else if (classes.includes('seagull')) tipText = "🔊 點擊聽海鷗聲";
+    else if (classes.includes('plastic-bag')) tipText = "⚠️ 點擊檢視垃圾危害";
+
+    if (creatureTooltip) {
+      clearTooltipClasses();
+      creatureTooltip.querySelector('.tooltip-text').innerText = tipText;
+
+      // 深度區域色彩分層
+      const zone = getCreatureZone(classes);
+      creatureTooltip.classList.add(zone);
+
+      // 入場方向感知
+      const dir = getEntryDirection(e, e.target);
+      creatureTooltip.classList.add(dir);
+
+      // 初始定位（避免從畫面角落閃現）
+      tooltipX = e.clientX;
+      tooltipY = e.clientY;
+      creatureTooltip.style.left = `${tooltipX}px`;
+      creatureTooltip.style.top = `${tooltipY}px`;
+
+      // 下一幀才加 active，確保 CSS transition 能正確捕捉初始→最終狀態
+      requestAnimationFrame(() => {
+        creatureTooltip.classList.add('active');
+      });
+    }
+  });
+
+  // rAF 節流 mousemove
+  el.addEventListener('mousemove', (e) => {
+    tooltipX = e.clientX;
+    tooltipY = e.clientY;
+    if (!tooltipRafId) {
+      tooltipRafId = requestAnimationFrame(() => {
+        if (creatureTooltip && creatureTooltip.classList.contains('active')) {
+          creatureTooltip.style.left = `${tooltipX}px`;
+          creatureTooltip.style.top = `${tooltipY}px`;
+        }
+        tooltipRafId = null;
+      });
+    }
+  });
+
+  el.addEventListener('mouseleave', () => {
+    clearTooltipClasses();
+    if (tooltipRafId) {
+      cancelAnimationFrame(tooltipRafId);
+      tooltipRafId = null;
+    }
   });
 });
 
@@ -720,6 +820,11 @@ gsap.to('.pb-12', { x: "-10vw", y: "-30vh", rotation: -180, ease: "none", scroll
 gsap.to('.pb-13', { x: "20vw", y: "-25vh", rotation: 90, ease: "none", scrollTrigger: { trigger: "#scene-2", start: "top bottom", end: "bottom top", scrub: 0.9 }});
 gsap.to('.pb-14', { x: "-40vw", y: "10vh", rotation: -75, ease: "none", scrollTrigger: { trigger: "#scene-2", start: "top bottom", end: "bottom top", scrub: 0.5 }});
 gsap.to('.pb-15', { x: "30vw", y: "25vh", rotation: 210, ease: "none", scrollTrigger: { trigger: "#scene-2", start: "top bottom", end: "bottom top", scrub: 0.8 }});
+gsap.to('.pb-16', { x: "-30vw", y: "-20vh", rotation: -90, ease: "none", scrollTrigger: { trigger: "#scene-2", start: "top bottom", end: "bottom top", scrub: 0.6 }});
+gsap.to('.pb-17', { x: "-15vw", y: "15vh", rotation: 45, ease: "none", scrollTrigger: { trigger: "#scene-2", start: "top bottom", end: "bottom top", scrub: 0.4 }});
+gsap.to('.pb-18', { x: "25vw", y: "-35vh", rotation: -120, ease: "none", scrollTrigger: { trigger: "#scene-2", start: "top bottom", end: "bottom top", scrub: 0.9 }});
+gsap.to('.pb-19', { x: "-40vw", y: "10vh", rotation: 60, ease: "none", scrollTrigger: { trigger: "#scene-2", start: "top bottom", end: "bottom top", scrub: 0.7 }});
+gsap.to('.pb-20', { x: "35vw", y: "-15vh", rotation: 200, ease: "none", scrollTrigger: { trigger: "#scene-2", start: "top bottom", end: "bottom top", scrub: 0.5 }});
 
 // Scene 3: Deep sea creatures
 gsap.to('.angler-1', { x: "65vw", y: "5vh", ease: "none", scrollTrigger: { trigger: "#scene-3", start: "top bottom", end: "bottom top", scrub: 0.4 }});
