@@ -33,7 +33,8 @@ let depthFactor = 0; // 0.0 (surface) to 1.0 (deepest)
 const audio = {
   masterVol: 0.7, musicVol: 0.6, sfxVol: 0.8,
   ambient: $('audio-ambient'), music: $('audio-music'),
-  dolphin: $('audio-dolphin'), whale: $('audio-whale'), click: $('audio-click')
+  dolphin: $('audio-dolphin'), whale: $('audio-whale'), click: $('audio-click'),
+  seagull: $('audio-seagull')
 };
 
 function setVolumes() {
@@ -45,8 +46,9 @@ function setVolumes() {
   const musicMulti = 0.5 - (0.2 * depthFactor);
   if(audio.music) audio.music.volume = audio.musicVol * audio.masterVol * musicMulti;
   
-  if(audio.dolphin) audio.dolphin.volume = audio.sfxVol * audio.masterVol;
+  if(audio.dolphin) audio.dolphin.volume = audio.sfxVol * audio.masterVol * 0.1; // 調降海豚音量至 10% 以減少刺耳感
   if(audio.whale)   audio.whale.volume   = audio.sfxVol * audio.masterVol;
+  if(audio.seagull) audio.seagull.volume = audio.sfxVol * audio.masterVol;
   if(audio.click)   audio.click.volume   = audio.sfxVol * audio.masterVol;
 }
 
@@ -314,8 +316,89 @@ document.querySelectorAll('.opt-btn, .btn-start, .action-btn').forEach(btn => {
   });
 });
 
-document.querySelectorAll('.dolphin').forEach(el => el.addEventListener('click', () => playSfx(audio.dolphin)));
-document.querySelectorAll('.whale').forEach(el => el.addEventListener('click', () => playSfx(audio.whale)));
+// ── CREATURE ENCYCLOPEDIA ─────────────────
+const creatureData = {
+  "seagull": { name: "海鷗", sciname: "Laridae", depth: "海面上", desc: "海鷗是常見的海鳥，常在海岸線附近盤旋，尋找魚類與人類丟棄的食物。牠們能適應不同的環境，在海洋生態系中扮演重要的角色。" },
+  "dolphin": { name: "海豚", sciname: "Delphinidae", depth: "0-200m (透光層)", desc: "海豚是高度聰明的海洋哺乳動物，依靠回聲定位在淺海中捕食與溝通。牠們生性群居，常伴隨船隻航行。" },
+  "cf-r": { name: "小丑魚", sciname: "Amphiprioninae", depth: "0-50m (透光層)", desc: "小丑魚主要棲息在熱帶海域的珊瑚礁中。牠們與海葵形成互利共生的關係，能分泌特殊黏液保護自己免受海葵毒刺的傷害。" },
+  "cf-l": { name: "小丑魚", sciname: "Amphiprioninae", depth: "0-50m (透光層)", desc: "小丑魚主要棲息在熱帶海域的珊瑚礁中。牠們與海葵形成互利共生的關係，能分泌特殊黏液保護自己免受海葵毒刺的傷害。" },
+  "bt-r": { name: "藍倒吊", sciname: "Paracanthurus hepatus", depth: "0-40m (透光層)", desc: "俗稱「擬刺尾鯛」，鮮豔的寶藍色身體與黃色的尾巴是牠們的特徵。喜歡在珊瑚礁區群游，主要以海藻為食。" },
+  "bt-l": { name: "藍倒吊", sciname: "Paracanthurus hepatus", depth: "0-40m (透光層)", desc: "俗稱「擬刺尾鯛」，鮮豔的寶藍色身體與黃色的尾巴是牠們的特徵。喜歡在珊瑚礁區群游，主要以海藻為食。" },
+  "turtle": { name: "綠蠵龜", sciname: "Chelonia mydas", depth: "0-150m (透光層)", desc: "綠蠵龜是大型的海龜，成年後主要以海草為食，這也使得牠們的體脂肪呈現淡綠色。目前因棲地破壞與海洋塑膠污染面臨極大的生存威脅。" },
+  "seahorse": { name: "海馬", sciname: "Hippocampus", depth: "0-30m (透光層)", desc: "海馬擁有獨特的外型，游泳速度緩慢，通常會用尾巴纏繞在海草或珊瑚上。牠們是海洋中少數由雄性負責孵化卵的生物。" },
+  "whale": { name: "抹香鯨", sciname: "Physeter macrocephalus", depth: "200-1000m (弱光層)", desc: "抹香鯨是體型最大的齒鯨，可以潛入深海數千公尺尋找大王烏賊。牠們在深海中能發出強大的喀答聲進行溝通與定位。" },
+  "anglerfish": { name: "鮟鱇魚", sciname: "Lophiiformes", depth: "1000m+ (無光層)", desc: "生活在黑暗的深海中，鮟鱇魚利用頭部由背鰭演化而成的發光釣竿（誘餌）來吸引獵物。牠們擁有極具擴張性的大嘴與利齒。" },
+  "deep-jelly": { name: "深海發光水母", sciname: "Bioluminescent Jellyfish", depth: "1000m+ (無光層)", desc: "在無光層中，許多水母演化出了生物螢光（Bioluminescence）的能力。當受到干擾時，牠們會發出藍綠色的冷光，藉此嚇退掠食者或吸引獵物的注意。" },
+  "plastic-bag": { name: "塑膠垃圾", sciname: "Microplastics & Debris", depth: "全水層分佈", desc: "人類每年將數百萬噸的塑膠廢棄物排入海洋。這些垃圾難以分解，會被海龜與魚類誤食，最終甚至可能進入人類的食物鏈。" }
+};
+
+const creatureModal = $('creature-modal');
+const modalCloseBtn = $('modal-close');
+const mTitle = $('modal-title');
+const mSci = $('modal-sciname');
+const mDepth = $('modal-depth');
+const mDesc = $('modal-desc');
+
+document.querySelectorAll('.creature').forEach(el => {
+  el.addEventListener('click', (e) => {
+    const classes = e.target.className.split(' ');
+    let creatureKey = null;
+    
+    // Find the creature key from classes
+    for (let c of classes) {
+      if (creatureData[c]) {
+        creatureKey = c;
+        break;
+      }
+    }
+    
+    if (creatureKey) {
+      const data = creatureData[creatureKey];
+      mTitle.innerText = data.name;
+      mSci.innerText = data.sciname;
+      mDepth.innerText = data.depth;
+      mDesc.innerText = data.desc;
+      
+      // Position calculation
+      const rect = e.target.getBoundingClientRect();
+      const mContent = creatureModal.querySelector('.modal-content');
+      let left = rect.right + 15;
+      let top = rect.top;
+      
+      // Prevent overflow
+      const modalW = 320;
+      const modalH = 220;
+      if (left + modalW > window.innerWidth) {
+        left = rect.left - modalW - 15;
+        if (left < 10) left = 10;
+      }
+      if (top + modalH > window.innerHeight) {
+        top = window.innerHeight - modalH - 20;
+      }
+      if (top < 10) top = 10;
+      
+      mContent.style.left = `${left}px`;
+      mContent.style.top = `${top}px`;
+      
+      creatureModal.classList.add('active');
+    }
+    
+    // Play sound if applicable
+    if (classes.includes('dolphin')) playSfx(audio.dolphin);
+    if (classes.includes('whale')) playSfx(audio.whale);
+    if (classes.includes('seagull')) playSfx(audio.seagull);
+    
+    e.stopPropagation();
+  });
+});
+
+if(modalCloseBtn) modalCloseBtn.addEventListener('click', () => creatureModal.classList.remove('active'));
+if($('modal-overlay')) $('modal-overlay').addEventListener('click', () => creatureModal.classList.remove('active'));
+window.addEventListener('keydown', (e) => { 
+  if (e.key === 'Escape' && creatureModal.classList.contains('active')) {
+    creatureModal.classList.remove('active'); 
+  }
+});
 
 // ── INTERSECTION OBSERVER ─────────────────
 const io=new IntersectionObserver(entries=>{ entries.forEach(e=>{if(e.isIntersecting)e.target.classList.add('visible');}); },{threshold:0.14});
@@ -607,7 +690,7 @@ gsap.to('#bg-layer-3', { opacity: 1, ease: "none", scrollTrigger: { trigger: "#s
 
 // Scene 0: Seagulls scatter in different directions
 gsap.to('.seagull-1', { x: "-40vw", y: "-70vh", ease: "none", scrollTrigger: { trigger: "#scene-0", start: "top top", end: "bottom top", scrub: 0.2 }});
-gsap.to('.seagull-2', { x: "-20vw", y: "-40vh", ease: "none", scrollTrigger: { trigger: "#scene-0", start: "top top", end: "bottom top", scrub: 0.5 }});
+gsap.to('.seagull-2', { x: "35vw", y: "-40vh", ease: "none", scrollTrigger: { trigger: "#scene-0", start: "top top", end: "bottom top", scrub: 0.5 }});
 gsap.to('.seagull-3', { x: "-10vw", y: "-25vh", ease: "none", scrollTrigger: { trigger: "#scene-0", start: "top top", end: "bottom top", scrub: 0.8 }});
 gsap.to('.seagull-4', { x: "55vw", y: "-65vh", ease: "none", scrollTrigger: { trigger: "#scene-0", start: "top top", end: "bottom top", scrub: 0.3 }});
 

@@ -10,7 +10,7 @@
   <link
     href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Noto+Sans+TC:wght@300;400;500;700;900&family=Share+Tech+Mono&display=swap"
     rel="stylesheet" />
-  <link rel="stylesheet" href="static/style.css?v=44" />
+  <link rel="stylesheet" href="static/style.css?v=50" />
   <link rel="preload" as="image" href="static/images/scene0_start.png" />
   <link rel="preload" as="image" href="static/images/scene1.png" />
 </head>
@@ -101,7 +101,7 @@
       <div class="env-grid">
         <div class="env-item"><span class="env-icon">⊙</span><span class="env-val" id="env-pressure">1.0</span><span
             class="env-key">水壓 atm</span></div>
-        <div class="env-item"><span class="env-icon">♒</span><span class="env-val" id="env-temp">25.0</span><span
+        <div class="env-item"><span class="env-icon">🌡</span><span class="env-val" id="env-temp">25.0</span><span
             class="env-key">水溫 °C</span></div>
         <div class="env-item"><span class="env-icon">○</span><span class="env-val" id="env-o2">21</span><span
             class="env-key">氧氣 %</span></div>
@@ -338,6 +338,25 @@
 
   </div>
 
+  <!-- Creature Encyclopedia Modal -->
+  <div id="creature-modal" class="creature-modal">
+    <div class="modal-overlay" id="modal-overlay"></div>
+    <div class="modal-content glass-card">
+      <button id="modal-close" class="modal-close">✖</button>
+      <div class="modal-header">
+        <h3 id="modal-title" class="glow-text">生物名稱</h3>
+        <div id="modal-sciname" class="sciname">學名</div>
+      </div>
+      <div class="modal-meta">
+        <span class="meta-label">棲息深度</span>
+        <span id="modal-depth" class="meta-value">0-200m</span>
+      </div>
+      <div class="modal-desc" id="modal-desc">
+        這裡是生物的詳細介紹文案。
+      </div>
+    </div>
+  </div>
+
   <audio id="audio-click" preload="auto">
     <source src="https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3" type="audio/mpeg" />
   </audio>
@@ -353,6 +372,9 @@
   <audio id="audio-whale" preload="auto">
     <source src="static/audio/whale.mp3" type="audio/mpeg" />
   </audio>
+  <audio id="audio-seagull" preload="auto">
+    <source src="static/audio/seagull.mp3" type="audio/mpeg" />
+  </audio>
 
   <!-- Lenis 平滑滾動 -->
   <script src="https://unpkg.com/lenis@1.1.18/dist/lenis.min.js"></script>
@@ -361,7 +383,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
 
-  <script src="static/main.js?v=24"></script>
+  <script src="static/main.js?v=30"></script>
 </body>
 
 </html>
