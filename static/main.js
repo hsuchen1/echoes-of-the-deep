@@ -572,12 +572,14 @@ async function renderRoster() {
       return;
     }
     const escapeHTML = str => String(str).replace(/[&<>'"]/g, tag => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'}[tag] || tag));
-    list.innerHTML = guardians.map(g => `
+    list.innerHTML = guardians.map(g => {
+      const p = personas[Math.min(g.score, 3)] || personas[0];
+      return `
       <div class="roster-item">
-        <div class="roster-name"><span>✨</span> ${escapeHTML(g.name)}</div>
+        <div class="roster-name"><span>${p.icon}</span> ${escapeHTML(g.name)}</div>
         <div class="roster-score">${g.score}/3 題</div>
       </div>
-    `).join('');
+    `}).join('');
   } catch(e) {
     list.innerHTML = '<div class="roster-empty">無法載入守護者名單</div>';
   }
@@ -937,3 +939,28 @@ gsap.to('.jelly-2', { x: "45vw", y: "-20vh", ease: "none", scrollTrigger: { trig
 gsap.to('.jelly-3', { x: "-35vw", y: "5vh", ease: "none", scrollTrigger: { trigger: "#scene-3", start: "top bottom", end: "bottom top", scrub: 0.7 }});
 gsap.to('.jelly-4', { x: "-10vw", y: "-5vh", ease: "none", scrollTrigger: { trigger: "#scene-3", start: "top bottom", end: "bottom top", scrub: 1.3 }});
 gsap.to('.jelly-5', { x: "25vw", y: "10vh", ease: "none", scrollTrigger: { trigger: "#scene-3", start: "top bottom", end: "bottom top", scrub: 0.8 }});
+
+// ── PRELOADER & MUTE ──────────────────────
+window.addEventListener('load', () => {
+  const preloader = $('preloader');
+  if(preloader) {
+    setTimeout(() => { preloader.classList.add('fade-out'); }, 800); // 確保至少看得到 0.8 秒動畫
+  }
+});
+// 5秒安全解鎖
+setTimeout(() => {
+  const preloader = $('preloader');
+  if(preloader && !preloader.classList.contains('fade-out')) {
+    preloader.classList.add('fade-out');
+  }
+}, 5000);
+
+let isGlobalMuted = false;
+const globalMuteBtn = $('global-mute-btn');
+if(globalMuteBtn) {
+  globalMuteBtn.addEventListener('click', () => {
+    isGlobalMuted = !isGlobalMuted;
+    document.querySelectorAll('audio').forEach(a => a.muted = isGlobalMuted);
+    globalMuteBtn.textContent = isGlobalMuted ? '🔇' : '🔊';
+  });
+}

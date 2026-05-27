@@ -152,15 +152,25 @@ body {
 /* ═══ SOUND CONTROLS (bottom right panel) ═══ */
 #sound-controls {
   position: fixed;
-  right: 0.5%;
-  bottom: 1.5%;
+  right: 0%;
+  bottom: 1.7%;
   z-index: 9100;
-  width: 16%;
-  height: 9.5%;
-  background: transparent;
+  width: 22.45%;
+  height: 11.4vh;
+  
+  /* Seamless Glassmorphism blending with background texture */
+  background: rgba(0, 15, 30, 0.25);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  /* Cut the left edge to match the painted slanted polygon (\) */
+  clip-path: polygon(0 0%, 100% 0%, 100% 100%, 10.7% 100%);
+  
+  padding: 0.01vh 0.6vw 0.2vh 1.5vw;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  gap: 0.2vh;
+  transform: scale(0.805);
+  transform-origin: bottom right;
 }
 
 .vol-row {
@@ -168,7 +178,7 @@ body {
   align-items: center;
   justify-content: space-between;
   gap: 0.3vw;
-  font-size: 0.55rem;
+  font-size: 0.5vw;
   color: rgba(0, 229, 255, 0.7);
   font-family: var(--sans)
 }
@@ -205,7 +215,7 @@ body {
   letter-spacing: 0.15vw;
   color: rgba(0, 229, 255, 0.6);
   text-transform: uppercase;
-  margin-bottom: 0.3vw;
+  margin-bottom: 0.1vw;
   text-shadow: 0 0 8px rgba(0, 229, 255, 0.4);
 }
 
@@ -2818,4 +2828,67 @@ body {
   .creature-tooltip {
     display: none !important;
   }
+}
+
+/* --- 預載畫面 Preloader --- */
+#preloader {
+  position: fixed;
+  top: 0; left: 0; width: 100vw; height: 100vh;
+  background: #000a14;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.8s ease, visibility 0.8s;
+}
+#preloader.fade-out {
+  opacity: 0;
+  visibility: hidden;
+}
+.loader-content {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+}
+.loader-ring {
+  width: 50px; height: 50px;
+  border: 3px solid rgba(0, 255, 157, 0.1);
+  border-top-color: #00ff9d;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  box-shadow: 0 0 15px rgba(0, 255, 157, 0.4);
+}
+.loader-text {
+  font-family: var(--tc);
+  color: #00ff9d;
+  font-size: 1rem;
+  letter-spacing: 0.15em;
+  text-shadow: 0 0 10px rgba(0, 255, 157, 0.5);
+  animation: pulseOpacity 1.5s ease-in-out infinite alternate;
+}
+@keyframes spin { 100% { transform: rotate(360deg); } }
+@keyframes pulseOpacity { 0% { opacity: 0.5; } 100% { opacity: 1; } }
+
+/* --- 靜音按鈕 Mute Button --- */
+.mute-btn {
+  background: transparent;
+  border: 1px solid rgba(0, 229, 255, 0.3);
+  color: #00e5ff;
+  border-radius: 3px;
+  width: 1.4vw; height: 1.1vw;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 0.6vw;
+  transition: all 0.3s;
+  padding: 0;
+  line-height: 1;
+}
+.mute-btn:hover {
+  background: rgba(0, 229, 255, 0.2);
+  border-color: #00e5ff;
+  box-shadow: 0 0 8px rgba(0, 229, 255, 0.4);
 }

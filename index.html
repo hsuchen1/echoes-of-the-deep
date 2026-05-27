@@ -10,12 +10,19 @@
   <link
     href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Noto+Sans+TC:wght@300;400;500;700;900&family=Share+Tech+Mono&display=swap"
     rel="stylesheet" />
-  <link rel="stylesheet" href="static/style.css?v=56" />
+  <link rel="stylesheet" href="static/style.css?v=67" />
   <link rel="preload" as="image" href="static/images/scene0_start.png" />
   <link rel="preload" as="image" href="static/images/scene1.png" />
 </head>
 
 <body>
+  <!-- 預載畫面 -->
+  <div id="preloader">
+    <div class="loader-content">
+      <div class="loader-ring"></div>
+      <div class="loader-text" style="line-height: 1.5;">深海通訊鏈路建立中...<br><span style="font-size: 0.8em; opacity: 0.7;">INITIALIZING DEEP SEA LINK...</span></div>
+    </div>
+  </div>
   
   <!-- 固定背景層 (Crossfade) -->
   <div id="bg-container">
@@ -117,7 +124,10 @@
   </div>
 
   <div id="sound-controls">
-    <div class="hud-label">音量控制</div>
+    <div class="hud-label" style="display:flex; justify-content:space-between; align-items:center;">
+      <span>音效控制</span>
+      <button id="global-mute-btn" class="mute-btn" title="切換靜音">🔊</button>
+    </div>
     <div class="vol-row"><span>主音量</span><input type="range" id="vol-master" min="0" max="100" value="70" /></div>
     <div class="vol-row"><span>音樂</span><input type="range" id="vol-music" min="0" max="100" value="60" /></div>
     <div class="vol-row"><span>音效</span><input type="range" id="vol-sfx" min="0" max="100" value="80" /></div>
