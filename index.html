@@ -6,6 +6,11 @@
   <meta name="viewport" content="width=device-width,initial-scale=1.0" />
   <title>深海迴聲 Echoes of the Deep</title>
   <meta name="description" content="SDG14 沉浸式深海探索 — 透過潛水艇觀測窗，潛入海洋保育核心議題。" />
+  <meta property="og:title" content="深海迴聲 Echoes of the Deep" />
+  <meta property="og:description" content="SDG14 沉浸式深海探索 — 透過潛水艇觀測窗，親身感受海洋生態面臨的危機。" />
+  <meta property="og:image" content="https://hsuchen1.github.io/echoes-of-the-deep/static/images/scene1.png" />
+  <meta property="og:url" content="https://hsuchen1.github.io/echoes-of-the-deep/" />
+  <meta property="og:type" content="website" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link
     href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Noto+Sans+TC:wght@300;400;500;700;900&family=Share+Tech+Mono&display=swap"
@@ -16,6 +21,8 @@
 </head>
 
 <body>
+  <div class="page-transition"></div>
+  <div class="custom-cursor"></div>
   <!-- 預載畫面 -->
   <div id="preloader">
     <div class="loader-content">
@@ -164,7 +171,7 @@
         </div>
         <div class="quiz-card glass-card reveal">
           <div class="quiz-num">問題 01 / 03</div>
-          <p class="quiz-q">你眼前的珊瑚為何逐漸失去色彩，變成死寂的白色？</p>
+          <p class="quiz-q">你眼前的這些美麗珊瑚，正因為海洋環境改變而面臨「白化」危機。請問導致珊瑚失去色彩的主因是什麼？</p>
           <div class="quiz-opts">
             <button class="opt-btn" data-q="1" data-ok="false">A．海底火山噴發導致海水酸化</button>
             <button class="opt-btn" data-q="1" data-ok="true">B．海水升溫使珊瑚排出共生藻</button>
@@ -423,6 +430,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
 
   <script src="static/main.js?v=35"></script>
+  <script src="static/ui-effects.js"></script>
 </body>
 
 </html>
