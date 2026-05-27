@@ -599,7 +599,7 @@ function showResults(stats){
   setTimeout(()=>{ el.prBar.style.width=pr+'%'; },600);
   animateNum(el.statWhale,stats.whale||0);
   animateNum(el.statTotal,stats.total||1);
-  animateNum(el.statDives,(stats.total||1)*52+23789,2000);
+  animateNum(el.statDives,stats.total||1,2000);
   $('scene-4').classList.add('shaking');
   setTimeout(()=>$('scene-4').classList.remove('shaking'),550);
   renderRoster();

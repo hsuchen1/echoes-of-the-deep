@@ -153,3 +153,18 @@
   * 在宣誓面板下方新增了「歷屆海洋守護者名錄」，將曾經簽署過的玩家名稱與答對題數記錄在 `localStorage`。
   * 透過自動帶有客製化科技風格卷軸的清單展示，讓玩家的參與能被永久記憶，進一步強化遊戲的社群連結感。
 * **全息風格 UI**：輸入框、按鈕與清單延續了深海高科技儀表板的 `Glassmorphism` 玻璃擬物化與螢光青色發光設計，完美融入終端機場景。
+
+## 🌐 13. 後端資料庫整合 (Backend & Database Integration)
+* **PythonAnywhere Flask 後端**：將「海洋守護者名錄」從原本僅存在瀏覽器端的 `localStorage`，正式遷移至 PythonAnywhere 託管的 Flask 後端伺服器。
+* **SQLite 資料庫儲存**：所有的潛航成績與守護者宣誓，現在都會永久寫入 SQLite 資料庫 (`results.db`)，達成真正的全站即時數據同步。
+* **無縫資料庫升級**：在 Flask 的 `init_db` 中實作了向後相容的資料庫檢查，如果舊有資料表缺少 `nickname` 欄位，系統將自動執行 `ALTER TABLE` 擴充，保證舊資料不遺失。
+* **跨來源資源共用 (CORS)**：導入 `Flask-Cors`，完美支援前端架設在 GitHub Pages，後端架設在 PythonAnywhere 的分離式架構。
+
+## 🛡️ 14. 系統安全與效能全方位優化 (Security & Performance Tuning)
+* **XSS 漏洞防禦 (前端)**：在渲染「守護者名錄」的 `main.js` 中新增了 `escapeHTML` 輔助函式，強制轉義 `<script>` 等危險字元，防堵 Stored XSS 攻擊。
+* **輸入驗證與防禦 (後端)**：在 `/api/pledge` 路由中，強制截斷過長的暱稱（至多 15 字），並使用 `strip()` 過濾惡意空白字元。
+* **GPU 節能渲染 (IntersectionObserver)**：
+  * 為透光層珊瑚 (`coralCanvas`)、弱光層塑膠 (`plasticCanvas`)、無光層發光生物 (`biolumCanvas`) 加入原生的 IntersectionObserver。
+  * 只有在該特效場景進入螢幕範圍時，才會觸發 `requestAnimationFrame` 進行渲染；滑出畫面則立刻暫停，大幅降低顯示卡耗電與發熱。
+* **後端並發穩定性 (Database Timeout)**：為 `sqlite3.connect` 加入了 `timeout=10` 參數。當網站遭遇多人同時送出資料時，資料庫連線會自動排隊等待，避免拋出 `database is locked` 的崩潰錯誤。
+* **防連點機制 (Anti-spam UX)**：在使用者點擊「加入守護行列」時，按鈕會立即顯示為「傳送中...」並被鎖定 (`disabled = true`)，直到伺服器回傳結果，防止網路不穩時的重複提交。
