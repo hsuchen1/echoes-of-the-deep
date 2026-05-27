@@ -75,12 +75,14 @@ def stats():
     score = request.args.get('score', 0, type=int)
     with get_db() as conn:
         total = conn.execute('SELECT COUNT(*) as c FROM results').fetchone()['c']
+        pledged = conn.execute('SELECT COUNT(*) as c FROM results WHERE nickname IS NOT NULL AND nickname != ""').fetchone()['c']
         lower = conn.execute('SELECT COUNT(*) as c FROM results WHERE score < ?', (score,)).fetchone()['c']
         pr = round(lower/total*100) if total > 0 else 85
         rows = conn.execute('SELECT persona, COUNT(*) as c FROM results GROUP BY persona').fetchall()
         personas = {r['persona']: r['c'] for r in rows}
     return jsonify({
         'total': total or 1,
+        'pledged': pledged or 0,
         'pr': pr,
         'whale': personas.get('睿智的藍鯨', 0),
         'turtle': personas.get('堅韌的海龜', 0),
