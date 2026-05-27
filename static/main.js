@@ -72,7 +72,9 @@ const cCtx = coralCanvas.getContext('2d');
 let coralTime = 0;
 function resizeCoral() { coralCanvas.width=coralCanvas.offsetWidth; coralCanvas.height=coralCanvas.offsetHeight; }
 resizeCoral(); window.addEventListener('resize', resizeCoral);
+let isCoralVisible = true;
 function drawCoral() {
+  if (!isCoralVisible) { requestAnimationFrame(drawCoral); return; }
   const W=coralCanvas.width,H=coralCanvas.height;
   coralTime+=0.01; cCtx.clearRect(0,0,W,H);
   for(let i=0;i<6;i++){
@@ -91,7 +93,9 @@ const pCtx = plasticCanvas.getContext('2d');
 function resizePlastic() { plasticCanvas.width=plasticCanvas.offsetWidth; plasticCanvas.height=plasticCanvas.offsetHeight; }
 resizePlastic(); window.addEventListener('resize', resizePlastic);
 if(!plasticCanvas._p) plasticCanvas._p = Array.from({length:70},()=>({x:Math.random(),y:Math.random(),r:Math.random()*2.5+0.5,vx:(Math.random()-0.5)*0.0006,vy:-(Math.random()*0.0009+0.0003),a:Math.random()*0.45+0.1,hue:Math.random()>0.5?200:30+Math.random()*35,sh:Math.random()>0.6}));
+let isPlasticVisible = true;
 function drawPlastic() {
+  if (!isPlasticVisible) { requestAnimationFrame(drawPlastic); return; }
   const W=plasticCanvas.width,H=plasticCanvas.height;
   pCtx.clearRect(0,0,W,H);
   plasticCanvas._p.forEach(p=>{ p.x+=p.vx; p.y+=p.vy; if(p.y<-0.05){p.y=1.05;p.x=Math.random();} if(p.x<0)p.x=1; if(p.x>1)p.x=0; pCtx.globalAlpha=p.a; pCtx.fillStyle=`hsla(${p.hue},70%,70%,1)`; const px=p.x*W,py=p.y*H; if(p.sh){pCtx.fillRect(px-p.r,py-p.r*0.5,p.r*2,p.r);}else{pCtx.beginPath();pCtx.arc(px,py,p.r,0,Math.PI*2);pCtx.fill();} }); pCtx.globalAlpha=1;
@@ -128,7 +132,9 @@ if(!biolumCanvas._o) biolumCanvas._o = Array.from({length:35},()=>({
   hue: hues[Math.floor(Math.random()*hues.length)]
 }));
 
+let isBiolumVisible = true;
 function drawBiolum() {
+  if (!isBiolumVisible) { requestAnimationFrame(drawBiolum); return; }
   const W=biolumCanvas.width,H=biolumCanvas.height;
   biolumTime+=0.015; bCtx.clearRect(0,0,W,H);
   
@@ -504,6 +510,20 @@ window.addEventListener('keydown', (e) => {
 const io=new IntersectionObserver(entries=>{ entries.forEach(e=>{if(e.isIntersecting)e.target.classList.add('visible');}); },{threshold:0.14});
 document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
 
+// ── CANVAS PERFORMANCE OBSERVER ───────────
+const canvasIo = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.target.id === 'scene-1') typeof isCoralVisible !== 'undefined' && (isCoralVisible = e.isIntersecting);
+    if (e.target.id === 'scene-2') typeof isPlasticVisible !== 'undefined' && (isPlasticVisible = e.isIntersecting);
+    if (e.target.id === 'scene-3') typeof isBiolumVisible !== 'undefined' && (isBiolumVisible = e.isIntersecting);
+  });
+}, { threshold: 0 });
+setTimeout(() => {
+  if($('scene-1')) canvasIo.observe($('scene-1'));
+  if($('scene-2')) canvasIo.observe($('scene-2'));
+  if($('scene-3')) canvasIo.observe($('scene-3'));
+}, 100);
+
 // ── QUIZ ──────────────────────────────────
 const personas=[
   {name:'被困住的寄居蟹',icon:'🦀',desc:'探索旅程才剛開始！海洋還有許多等你發現的秘密，別放棄！'},
@@ -551,9 +571,10 @@ async function renderRoster() {
       list.innerHTML = '<div class="roster-empty">尚無守護者，成為第一位吧！</div>';
       return;
     }
+    const escapeHTML = str => String(str).replace(/[&<>'"]/g, tag => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'}[tag] || tag));
     list.innerHTML = guardians.map(g => `
       <div class="roster-item">
-        <div class="roster-name"><span>✨</span> ${g.name}</div>
+        <div class="roster-name"><span>✨</span> ${escapeHTML(g.name)}</div>
         <div class="roster-score">${g.score}/3 題</div>
       </div>
     `).join('');
@@ -625,15 +646,18 @@ $('btn-share').addEventListener('click',()=>{
 
 // ── PLEDGE ────────────────────────────────
 $('btn-pledge').addEventListener('click', async ()=>{
+  const btn = $('btn-pledge');
   const nameInput = $('pledge-name');
   let name = nameInput.value.trim();
   if(!name) {
     name = "匿名守護者";
   }
-  $('pledge-form').style.display = 'none';
-  $('pledge-display-name').textContent = name;
-  $('pledge-success').style.display = 'flex';
   
+  // 防連點機制：禁用按鈕並更改文字
+  const originalText = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = '傳送中...';
+
   if (lastInsertedId) {
     try {
       await fetch(`${BACKEND_URL}/api/pledge`, {
@@ -643,8 +667,18 @@ $('btn-pledge').addEventListener('click', async ()=>{
       });
     } catch(e) {
       console.error("Failed to save pledge to backend", e);
+      // 失敗時恢復按鈕狀態
+      btn.disabled = false;
+      btn.textContent = originalText;
+      return;
     }
   }
+  
+  // 成功後隱藏表單並顯示成功訊息
+  $('pledge-form').style.display = 'none';
+  $('pledge-display-name').textContent = name; // 使用 textContent 避免 XSS
+  $('pledge-success').style.display = 'flex';
+  
   await renderRoster();
   
   // 更新統計數字

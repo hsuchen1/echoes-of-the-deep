@@ -7,7 +7,7 @@ CORS(app) # 允許跨來源請求，支援前端部署在 GitHub Pages
 DB = os.path.join(os.path.dirname(__file__), 'results.db')
 
 def get_db():
-    conn = sqlite3.connect(DB)
+    conn = sqlite3.connect(DB, timeout=10)
     conn.row_factory = sqlite3.Row
     return conn
 
@@ -48,7 +48,13 @@ def submit():
 def pledge():
     data = request.get_json()
     row_id = data.get('id')
-    nickname = data.get('nickname', '匿名守護者')
+    raw_nickname = data.get('nickname', '匿名守護者')
+    
+    # 安全性防護：過濾前後空白，並限制最大長度為 15
+    nickname = str(raw_nickname).strip()[:15]
+    if not nickname:
+        nickname = '無名英雄'
+        
     if row_id:
         with get_db() as conn:
             conn.execute('UPDATE results SET nickname = ? WHERE id = ?', (nickname, row_id))
