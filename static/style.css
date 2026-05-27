@@ -3062,3 +3062,116 @@ body {
 .page-transition.is-loaded {
   opacity: 0;
 }
+
+/* ═══ ANALYZE GATE BUTTON (Scene 4) ═══ */
+#analyze-gate {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  padding: 1.5rem 0 2rem;
+}
+
+.analyze-btn {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 1.2rem;
+  padding: 1.5rem 2.5rem;
+  width: 90%;
+  max-width: 440px;
+  background: rgba(0, 229, 255, 0.04);
+  border: 1px solid rgba(0, 229, 255, 0.35);
+  border-radius: 12px;
+  cursor: pointer;
+  color: #fff;
+  text-align: left;
+  overflow: hidden;
+  transition: background 0.4s ease, transform 0.3s ease;
+  animation: analyzeGlow 2.5s ease-in-out infinite;
+}
+
+/* 掃描線 */
+.analyze-btn::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 60%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(0, 229, 255, 0.08), transparent);
+  animation: analyzeSweep 2.5s linear infinite;
+}
+
+@keyframes analyzeGlow {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(0, 229, 255, 0.15), inset 0 0 20px rgba(0, 229, 255, 0.02);
+    border-color: rgba(0, 229, 255, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 50px rgba(0, 229, 255, 0.45), inset 0 0 30px rgba(0, 229, 255, 0.07);
+    border-color: rgba(0, 229, 255, 0.7);
+  }
+}
+
+@keyframes analyzeSweep {
+  0%   { left: -60%; }
+  100% { left: 120%; }
+}
+
+.analyze-icon {
+  font-size: 2.4rem;
+  color: var(--c1);
+  text-shadow: 0 0 20px rgba(0, 229, 255, 0.9);
+  flex-shrink: 0;
+  animation: analyzeIconPulse 2.5s ease-in-out infinite;
+  transition: transform 0.3s;
+}
+
+@keyframes analyzeIconPulse {
+  0%, 100% { transform: scale(1); opacity: 0.9; }
+  50% { transform: scale(1.18); opacity: 1; }
+}
+
+.analyze-label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.analyze-text {
+  font-family: var(--orb);
+  font-size: clamp(0.95rem, 2.2vw, 1.2rem);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: #fff;
+}
+
+.analyze-sub {
+  font-family: var(--mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.22em;
+  color: rgba(0, 229, 255, 0.5);
+}
+
+.analyze-btn:hover {
+  background: rgba(0, 229, 255, 0.1);
+  transform: translateY(-3px);
+}
+
+/* 分析中狀態 */
+.analyze-btn.analyzing {
+  animation: none;
+  border-color: rgba(0, 229, 255, 0.6);
+  cursor: default;
+  pointer-events: none;
+  background: rgba(0, 229, 255, 0.07);
+}
+
+.analyze-btn.analyzing .analyze-icon {
+  animation: analyzeSpin 0.9s linear infinite;
+}
+
+@keyframes analyzeSpin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}

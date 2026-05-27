@@ -47,7 +47,7 @@ function setVolumes() {
   if(audio.music) audio.music.volume = audio.musicVol * audio.masterVol * musicMulti;
   
   if(audio.dolphin) audio.dolphin.volume = audio.sfxVol * audio.masterVol * 0.1; // 調降海豚音量至 10% 以減少刺耳感
-  if(audio.whale)   audio.whale.volume   = audio.sfxVol * audio.masterVol;
+  if(audio.whale)   audio.whale.volume   = Math.min(1, audio.sfxVol * audio.masterVol * 1.8); // 放大抹香鯨音量
   if(audio.seagull) audio.seagull.volume = audio.sfxVol * audio.masterVol;
   if(audio.click)   audio.click.volume   = audio.sfxVol * audio.masterVol;
 }
@@ -85,7 +85,7 @@ function drawCoral() {
   }
   requestAnimationFrame(drawCoral);
 }
-drawCoral();
+// 不在初始化時啟動，改由 IntersectionObserver 控制
 
 // ── PLASTIC CANVAS (Scene 2) ──────────────
 const plasticCanvas = $('plastic-canvas');
@@ -101,7 +101,7 @@ function drawPlastic() {
   plasticCanvas._p.forEach(p=>{ p.x+=p.vx; p.y+=p.vy; if(p.y<-0.05){p.y=1.05;p.x=Math.random();} if(p.x<0)p.x=1; if(p.x>1)p.x=0; pCtx.globalAlpha=p.a; pCtx.fillStyle=`hsla(${p.hue},70%,70%,1)`; const px=p.x*W,py=p.y*H; if(p.sh){pCtx.fillRect(px-p.r,py-p.r*0.5,p.r*2,p.r);}else{pCtx.beginPath();pCtx.arc(px,py,p.r,0,Math.PI*2);pCtx.fill();} }); pCtx.globalAlpha=1;
   requestAnimationFrame(drawPlastic);
 }
-drawPlastic();
+// 不在初始化時啟動，改由 IntersectionObserver 控制
 
 // ── BIOLUM CANVAS (Scene 3) ───────────────
 const biolumCanvas = $('biolum-canvas');
@@ -161,7 +161,7 @@ function drawBiolum() {
   
   requestAnimationFrame(drawBiolum);
 }
-drawBiolum();
+// 不在初始化時啟動，改由 IntersectionObserver 控制
 
 // ── DEPTH CHART CANVAS ────────────────────
 const dcCanvas = $('depth-chart');
@@ -273,7 +273,6 @@ window.addEventListener('scroll',()=>{
     // Fast updates (no heavy DOM rendering)
     const scene=getCurrentScene();
     if(scene!==state.currentScene){ state.currentScene=scene; updateNav(scene); }
-    if(scene===4&&!state.submitted) submitResults();
     
     // Throttled updates for heavy HUD text rendering (~12 FPS)
     const now = Date.now();
@@ -605,6 +604,61 @@ function showResults(stats){
   $('scene-4').classList.add('shaking');
   setTimeout(()=>$('scene-4').classList.remove('shaking'),550);
   renderRoster();
+
+  // 隔絕按鈕淡出，結果區淡入
+  const gate = $('analyze-gate');
+  const reveal = $('results-reveal');
+  const titleEl = $('terminal-title');
+  const subEl = $('terminal-sub');
+
+  // 更新標题文字
+  if (titleEl) titleEl.textContent = '分析完成！';
+  if (subEl)   subEl.textContent   = '感謝您的探索，您的選擇將為海洋帶來改變！';
+
+  // 按鈕淡出
+  if (gate && typeof gsap !== 'undefined') {
+    gsap.to(gate, { opacity: 0, y: -20, duration: 0.4, ease: 'power2.in',
+      onComplete: () => { gate.style.display = 'none'; }
+    });
+  } else if (gate) {
+    gate.style.display = 'none';
+  }
+
+  // 結果區出現 + 動畫
+  if (reveal) {
+    reveal.style.display = 'block';
+    if (typeof gsap !== 'undefined') {
+      // 標題：從下方滑入並淡入
+      gsap.fromTo('.terminal-header',
+        { opacity: 0, y: 50, filter: 'blur(4px)' },
+        { opacity: 1, y: 0, filter: 'blur(0px)', duration: 0.8, ease: 'power3.out', clearProps: 'all' }
+      );
+      // 各資料面板：依序從下方滑入，帶有輕微縮放
+      gsap.fromTo('.terminal-panel',
+        { opacity: 0, y: 70, scale: 0.96 },
+        { opacity: 1, y: 0, scale: 1, duration: 0.75, ease: 'power3.out', stagger: 0.14, delay: 0.25, clearProps: 'all' }
+      );
+      // 底部按鈕：彈性彈入
+      gsap.fromTo('.terminal-actions',
+        { opacity: 0, y: 40, scale: 0.9 },
+        { opacity: 1, y: 0, scale: 1, duration: 0.6, ease: 'back.out(1.7)', delay: 0.25 + 0.14 * 6 + 0.1, clearProps: 'all' }
+      );
+    }
+  }
+}
+
+// ── ANALYZE BUTTON ────────────────────────────
+const analyzeBtn = $('btn-analyze');
+if (analyzeBtn) {
+  analyzeBtn.addEventListener('click', () => {
+    if (state.submitted) return; // 防重複點
+    // 變成載入狀態
+    analyzeBtn.classList.add('analyzing');
+    analyzeBtn.querySelector('.analyze-icon').textContent = '◌';
+    analyzeBtn.querySelector('.analyze-text').textContent = '分析中…… ANALYZING';
+    analyzeBtn.querySelector('.analyze-sub').textContent = 'PROCESSING DEEP SEA DATA';
+    submitResults();
+  });
 }
 
 async function submitResults(){
@@ -630,6 +684,22 @@ $('btn-restart').addEventListener('click',()=>{
   $('pledge-name').value = '';
   $('pledge-form').style.display = 'flex';
   $('pledge-success').style.display = 'none';
+  // 重置分析門
+  const gate = $('analyze-gate');
+  const reveal = $('results-reveal');
+  const titleEl = $('terminal-title');
+  const subEl = $('terminal-sub');
+  const aBtn = $('btn-analyze');
+  if (gate)   { gate.style.display = 'flex'; gate.style.opacity = '1'; }
+  if (reveal) { reveal.style.display = 'none'; }
+  if (titleEl) titleEl.textContent = '潛航完成';
+  if (subEl)   subEl.textContent   = '您已見證深海的真相。準備好接受系統分析了嗎？';
+  if (aBtn) {
+    aBtn.classList.remove('analyzing');
+    aBtn.querySelector('.analyze-icon').textContent = '◈';
+    aBtn.querySelector('.analyze-text').textContent = '開始分析深海航行報告';
+    aBtn.querySelector('.analyze-sub').textContent = 'INITIALIZE DEEP SEA ANALYSIS';
+  }
   window.scrollTo({top:0,behavior:'smooth'});
   setTimeout(()=>{ 
     state.started=false; el.audioModeLabel.textContent='OFF'; 
@@ -639,11 +709,19 @@ $('btn-restart').addEventListener('click',()=>{
 });
 
 // ── SHARE ─────────────────────────────────
+const SITE_URL = 'https://hsuchen1.github.io/echoes-of-the-deep/';
 $('btn-share').addEventListener('click',()=>{
   const p=personas[Math.min(state.score,3)];
-  const text=`我在「深海迴聲 Echoes of the Deep」探索中獲得了【${p.name}】的稱號！答對 ${state.score}/3 題，為 SDG14 海洋保育盡一份心力 🌊`;
-  if(navigator.share){navigator.share({title:'深海迴聲',text});}
-  else{navigator.clipboard.writeText(text).then(()=>alert('已複製到剪貼板！'));}
+  const shareTitle = '深海迴聲 Echoes of the Deep';
+  const shareText = `🌊 我在深海迴聲的潛航中，獲得了【${p.name}】的稱號！答對 ${state.score}/3 題。\n\n海洋正在無聲地呼救——珊瑚白化、塑膠微粒、底拖網……你敢下潛去親眼見證嗎？\n\n快來加入守護海洋的行列 👇`;
+  if(navigator.share){
+    navigator.share({title: shareTitle, text: shareText, url: SITE_URL}).catch(()=>{});
+  } else {
+    const fullText = `${shareText}\n${SITE_URL}`;
+    navigator.clipboard.writeText(fullText)
+      .then(()=>alert('✅ 已複製到剪貼板！\n打開 LINE / IG 貼上即可分享。'))
+      .catch(()=>alert(`前往這個網址體驗：\n${SITE_URL}`));
+  }
 });
 
 // ── PLEDGE ────────────────────────────────
@@ -839,40 +917,35 @@ gsap.ticker.lagSmoothing(0); // 防止 GSAP 跳幀補償干擾 Lenis
   requestAnimationFrame(animate);
 })();
 // ── VISIBILITY-GATED CANVAS RENDERING ─────
-// Only draw canvas when its section is on screen
-const canvasVisibility = { coral: false, plastic: false, biolum: false };
+// 只有在 section 進入畫面時才啟動對應的 Canvas 動畫迴圈，離開後自動暫停
+const canvasStarted = { coral: false, plastic: false, biolum: false };
 
 const canvasObserver = new IntersectionObserver((entries) => {
   entries.forEach(e => {
-    if (e.target.id === 'scene-1') canvasVisibility.coral = e.isIntersecting;
-    if (e.target.id === 'scene-2') canvasVisibility.plastic = e.isIntersecting;
-    if (e.target.id === 'scene-3') canvasVisibility.biolum = e.isIntersecting;
+    if (e.target.id === 'scene-1' && e.isIntersecting && !canvasStarted.coral) {
+      canvasStarted.coral = true;
+      drawCoral(); // 第一次進入才啟動，之後靠 isCoralVisible 開關
+    }
+    if (e.target.id === 'scene-1') isCoralVisible = e.isIntersecting;
+
+    if (e.target.id === 'scene-2' && e.isIntersecting && !canvasStarted.plastic) {
+      canvasStarted.plastic = true;
+      drawPlastic();
+    }
+    if (e.target.id === 'scene-2') isPlasticVisible = e.isIntersecting;
+
+    if (e.target.id === 'scene-3' && e.isIntersecting && !canvasStarted.biolum) {
+      canvasStarted.biolum = true;
+      drawBiolum();
+    }
+    if (e.target.id === 'scene-3') isBiolumVisible = e.isIntersecting;
   });
 }, { threshold: 0 });
 
 ['scene-1','scene-2','scene-3'].forEach(id => {
-  const el = document.getElementById(id);
-  if (el) canvasObserver.observe(el);
+  const sceneEl = document.getElementById(id);
+  if (sceneEl) canvasObserver.observe(sceneEl);
 });
-
-// Patch canvas draw loops to skip when off-screen
-const _drawCoral = drawCoral;
-drawCoral = function gatedCoral() {
-  if (canvasVisibility.coral) { _drawCoral(); } 
-  else { requestAnimationFrame(gatedCoral); }
-};
-
-const _drawPlastic = drawPlastic;
-drawPlastic = function gatedPlastic() {
-  if (canvasVisibility.plastic) { _drawPlastic(); }
-  else { requestAnimationFrame(gatedPlastic); }
-};
-
-const _drawBiolum = drawBiolum;
-drawBiolum = function gatedBiolum() {
-  if (canvasVisibility.biolum) { _drawBiolum(); }
-  else { requestAnimationFrame(gatedBiolum); }
-};
 
 // --- Global Background Parallax ---
 gsap.to('#bg-container', { 
@@ -939,6 +1012,8 @@ gsap.to('.jelly-2', { x: "45vw", y: "-20vh", ease: "none", scrollTrigger: { trig
 gsap.to('.jelly-3', { x: "-35vw", y: "5vh", ease: "none", scrollTrigger: { trigger: "#scene-3", start: "top bottom", end: "bottom top", scrub: 0.7 }});
 gsap.to('.jelly-4', { x: "-10vw", y: "-5vh", ease: "none", scrollTrigger: { trigger: "#scene-3", start: "top bottom", end: "bottom top", scrub: 1.3 }});
 gsap.to('.jelly-5', { x: "25vw", y: "10vh", ease: "none", scrollTrigger: { trigger: "#scene-3", start: "top bottom", end: "bottom top", scrub: 0.8 }});
+
+
 
 // ── PRELOADER & MUTE ──────────────────────
 window.addEventListener('load', () => {

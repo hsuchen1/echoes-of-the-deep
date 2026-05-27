@@ -27,10 +27,11 @@
   <div id="preloader">
     <div class="loader-content">
       <div class="loader-ring"></div>
-      <div class="loader-text" style="line-height: 1.5;">深海通訊鏈路建立中...<br><span style="font-size: 0.8em; opacity: 0.7;">INITIALIZING DEEP SEA LINK...</span></div>
+      <div class="loader-text" style="line-height: 1.5;">深海通訊鏈路建立中...<br><span
+          style="font-size: 0.8em; opacity: 0.7;">INITIALIZING DEEP SEA LINK...</span></div>
     </div>
   </div>
-  
+
   <!-- 固定背景層 (Crossfade) -->
   <div id="bg-container">
     <div class="bg-layer" id="bg-layer-0"></div>
@@ -290,89 +291,110 @@
 
     <section id="scene-4" class="scene terminal-scene">
       <div class="scene-content terminal-content">
-        <div class="terminal-header">
-          <div class="terminal-title">分析完成！</div>
-          <div class="terminal-sub">感謝您的探索，您的選擇將為海洋帶來改變！</div>
+        <div class="terminal-header" id="terminal-header">
+          <div class="terminal-title" id="terminal-title">潛航完成</div>
+          <div class="terminal-sub" id="terminal-sub">您已見證深海的真相。準備好接受系統分析了嗎？</div>
         </div>
-        <div class="terminal-body">
-          <div class="terminal-panel persona-panel">
-            <div class="panel-label">您的海洋守護者身分</div>
-            <div class="persona-display">
-              <div class="persona-badge-wrap">
-                <div id="persona-icon" class="persona-icon">🐋</div>
-                <div class="persona-hex"></div>
-              </div>
-              <div>
-                <div id="persona-name" class="persona-name">睿智的藍鯨</div>
-                <div id="persona-desc" class="persona-desc">您擁有廣闊的海洋知識，是海洋最堅實的守護者！</div>
-              </div>
-            </div>
-          </div>
-          <div class="terminal-panel score-panel">
-            <div class="panel-label">您的探索成績</div>
-            <div class="score-circle-wrap">
-              <svg class="score-circle" viewBox="0 0 100 100">
-                <circle cx="50" cy="50" r="42" fill="none" stroke="rgba(0,255,180,0.1)" stroke-width="6" />
-                <circle id="score-arc" cx="50" cy="50" r="42" fill="none" stroke="rgba(0,255,180,0.9)" stroke-width="6"
-                  stroke-linecap="round" stroke-dasharray="264" stroke-dashoffset="264" transform="rotate(-90 50 50)"
-                  style="filter:drop-shadow(0 0 6px rgba(0,255,180,0.8));transition:stroke-dashoffset 1.2s cubic-bezier(0.22,1,0.36,1)" />
-              </svg>
-              <div class="score-inner">
-                <div id="score-num" class="score-num">0/3</div>
-                <div id="score-pct" class="score-pct">正確率 0%</div>
-              </div>
-            </div>
-            <div id="score-comment" class="score-comment"></div>
-          </div>
-          <div class="terminal-panel rank-panel">
-            <div class="panel-label">知識水平比較</div>
-            <div class="rank-text">您的海洋知識超越了全站</div>
-            <div id="pr-big" class="pr-big">—%</div>
-            <div class="rank-text">的探索者！</div>
-            <div class="pr-bar-wrap">
-              <div class="pr-bar-bg">
-                <div id="pr-bar" class="pr-bar-fill">
-                  <div class="sub-icon">🤿</div>
+
+        <!-- 分析按鈕（初始顯示） -->
+        <div id="analyze-gate">
+          <button id="btn-analyze" class="analyze-btn">
+            <span class="analyze-icon">◈</span>
+            <span class="analyze-label">
+              <span class="analyze-text">開始分析深海航行報告</span>
+              <span class="analyze-sub">INITIALIZE DEEP SEA ANALYSIS</span>
+            </span>
+          </button>
+        </div>
+
+        <!-- 結果區（隱藏至按鈕點擊後） -->
+        <div id="results-reveal" style="display:none; width:100%;">
+          <div class="terminal-body">
+            <div class="terminal-panel persona-panel">
+              <div class="panel-label">您的海洋守護者身分</div>
+              <div class="persona-display">
+                <div class="persona-badge-wrap">
+                  <div id="persona-icon" class="persona-icon">🐋</div>
+                  <div class="persona-hex"></div>
+                </div>
+                <div>
+                  <div id="persona-name" class="persona-name">睿智的藍鯨</div>
+                  <div id="persona-desc" class="persona-desc">您擁有廣闊的海洋知識，是海洋最堅實的守護者！</div>
                 </div>
               </div>
-              <div class="pr-ticks"><span>0%</span><span>25%</span><span>50%</span><span>75%</span><span>100%</span>
+            </div>
+            <div class="terminal-panel score-panel">
+              <div class="panel-label">您的探索成績</div>
+              <div class="score-circle-wrap">
+                <svg class="score-circle" viewBox="0 0 100 100">
+                  <circle cx="50" cy="50" r="42" fill="none" stroke="rgba(0,255,180,0.1)" stroke-width="6" />
+                  <circle id="score-arc" cx="50" cy="50" r="42" fill="none" stroke="rgba(0,255,180,0.9)"
+                    stroke-width="6" stroke-linecap="round" stroke-dasharray="264" stroke-dashoffset="264"
+                    transform="rotate(-90 50 50)"
+                    style="filter:drop-shadow(0 0 6px rgba(0,255,180,0.8));transition:stroke-dashoffset 1.2s cubic-bezier(0.22,1,0.36,1)" />
+                </svg>
+                <div class="score-inner">
+                  <div id="score-num" class="score-num">0/3</div>
+                  <div id="score-pct" class="score-pct">正確率 0%</div>
+                </div>
+              </div>
+              <div id="score-comment" class="score-comment"></div>
+            </div>
+            <div class="terminal-panel rank-panel">
+              <div class="panel-label">知識水平比較</div>
+              <div class="rank-text">您的海洋知識超越了全站</div>
+              <div id="pr-big" class="pr-big">—%</div>
+              <div class="rank-text">的探索者！</div>
+              <div class="pr-bar-wrap">
+                <div class="pr-bar-bg">
+                  <div id="pr-bar" class="pr-bar-fill">
+                    <div class="sub-icon">🤿</div>
+                  </div>
+                </div>
+                <div class="pr-ticks"><span>0%</span><span>25%</span><span>50%</span><span>75%</span><span>100%</span>
+                </div>
+              </div>
+            </div>
+            <div class="terminal-panel stats-panel">
+              <div class="panel-label">全站數據統計（即時更新）</div>
+              <div class="stats-grid">
+                <div class="stat-item"><span class="stat-icon">🐋</span><span id="stat-whale"
+                    class="stat-num">—</span><span class="stat-lbl">位睿智的藍鯨<br />完成了潛航</span></div>
+                <div class="stat-item"><span class="stat-icon">👥</span><span id="stat-total"
+                    class="stat-num">—</span><span class="stat-lbl">位探索者<br />加入守護行列</span></div>
+                <div class="stat-item"><span class="stat-icon">🌊</span><span id="stat-dives"
+                    class="stat-num">—</span><span class="stat-lbl">次潛航總數<br />一起守護海洋</span></div>
+              </div>
+            </div>
+            <div class="terminal-panel pledge-panel">
+              <div class="panel-label">簽署守護海洋協定</div>
+              <div id="pledge-form" class="pledge-form">
+                <input type="text" id="pledge-name" class="pledge-input" placeholder="請輸入您的暱稱..." maxlength="15" />
+                <button id="btn-pledge" class="action-btn pledge-btn">加入守護行列</button>
+              </div>
+              <div id="pledge-success" class="pledge-success" style="display: none;">
+                <div class="success-icon">✨</div>
+                <div class="success-msg">感謝 <span id="pledge-display-name" class="glow-text"></span> 成為海洋守護者！</div>
+              </div>
+            </div>
+            <div class="terminal-panel roster-panel">
+              <div class="panel-label">歷屆海洋守護者名錄</div>
+              <div id="roster-list" class="roster-list">
+                <!-- JS 會動態填寫 -->
               </div>
             </div>
           </div>
-          <div class="terminal-panel stats-panel">
-            <div class="panel-label">全站數據統計（即時更新）</div>
-            <div class="stats-grid">
-              <div class="stat-item"><span class="stat-icon">🐋</span><span id="stat-whale"
-                  class="stat-num">—</span><span class="stat-lbl">位睿智的藍鯨<br />完成了潛航</span></div>
-              <div class="stat-item"><span class="stat-icon">👥</span><span id="stat-total"
-                  class="stat-num">—</span><span class="stat-lbl">位探索者<br />加入守護行列</span></div>
-              <div class="stat-item"><span class="stat-icon">🌊</span><span id="stat-dives"
-                  class="stat-num">—</span><span class="stat-lbl">次潛航總數<br />一起守護海洋</span></div>
-            </div>
-          </div>
-          <div class="terminal-panel pledge-panel">
-            <div class="panel-label">簽署守護海洋協定</div>
-            <div id="pledge-form" class="pledge-form">
-              <input type="text" id="pledge-name" class="pledge-input" placeholder="請輸入您的暱稱..." maxlength="15" />
-              <button id="btn-pledge" class="action-btn pledge-btn">加入守護行列</button>
-            </div>
-            <div id="pledge-success" class="pledge-success" style="display: none;">
-              <div class="success-icon">✨</div>
-              <div class="success-msg">感謝 <span id="pledge-display-name" class="glow-text"></span> 成為海洋守護者！</div>
-            </div>
-          </div>
-          <div class="terminal-panel roster-panel">
-            <div class="panel-label">歷屆海洋守護者名錄</div>
-            <div id="roster-list" class="roster-list">
-              <!-- JS 會動態填寫 -->
-            </div>
+          <div class="terminal-actions" style="display: flex; flex-wrap: wrap; gap: 15px; justify-content: center;">
+            <button id="btn-restart" class="action-btn" style="white-space: nowrap;">↺
+              再來一次<br /><small>重新探索</small></button>
+            <button id="btn-share" class="action-btn action-btn-alt" style="white-space: nowrap;">⇪
+              分享成果<br /><small>邀請好友一起守護海洋</small></button>
+            <a class="action-btn action-btn-alt" href="about.html"
+              style="text-decoration:none; display:flex; flex-direction:column; align-items:center; justify-content:center; color: #fff; white-space: nowrap;">📖
+              深入了解專案<br /><small>知識庫與團隊介紹</small></a>
           </div>
         </div>
-        <div class="terminal-actions" style="display: flex; flex-wrap: wrap; gap: 15px; justify-content: center;">
-          <button id="btn-restart" class="action-btn" style="white-space: nowrap;">↺ 再來一次<br /><small>重新探索</small></button>
-          <button id="btn-share" class="action-btn action-btn-alt" style="white-space: nowrap;">⇪ 分享成果<br /><small>邀請好友一起守護海洋</small></button>
-          <a class="action-btn action-btn-alt" href="about.html" style="text-decoration:none; display:flex; flex-direction:column; align-items:center; justify-content:center; color: #fff; white-space: nowrap;">📖 深入了解專案<br /><small>知識庫與團隊介紹</small></a>
-        </div>
+
       </div>
     </section>
 
@@ -381,7 +403,7 @@
   <!-- Creature Encyclopedia Modal -->
   <div id="creature-modal" class="creature-modal">
     <div class="modal-overlay" id="modal-overlay"></div>
-    <div class="modal-content glass-card">
+    <div class="modal-content">
       <button id="modal-close" class="modal-close">✖</button>
       <div class="modal-header">
         <h3 id="modal-title" class="glow-text">生物名稱</h3>
