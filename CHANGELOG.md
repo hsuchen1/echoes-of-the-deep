@@ -286,4 +286,6 @@
 ### 🔄 「再來一次」完整重置
 * 點擊重玩按鈕時，分析門狀態完整重置：按鈕文字/圖示回到初始值、`analyzing` 狀態移除、`results-reveal` 重新隱藏、標題文字回到「潛航完成」，確保每次遊玩都能看到完整的分析揭示動畫。
 
-
+## ⚡ 22. 效能與資源載入最佳化 (Performance & Loading Optimization)
+* **圖片延遲載入 (Image Lazy Loading)**：為 `Scene 1`、`Scene 2`、`Scene 3` 中所有海洋生物與塑膠垃圾等不在首屏顯示的 `<img>` 標籤加上了 `loading="lazy"` 屬性。這將大幅降低頁面初次載入時的頻寬浪費與請求數量，進一步提升首屏渲染速度。
+* **字體連線最佳化 (Font Preconnect)**：為 Google Fonts 的 `fonts.gstatic.com` 預先連線補上 `crossorigin` 屬性，確保瀏覽器能正確並加速處理字體的跨域請求 (CORS)，縮短字型載入的延遲時間。
